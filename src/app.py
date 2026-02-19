@@ -1,16 +1,12 @@
-from typing import List, Optional
-
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 
+from database import Base, engine
 from routes import general_routes, users_routes
-from database import engine, Base
-from models import users_model
 
 # database setup
-# Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 # app setup
 app = FastAPI(title="sql alchemy")
