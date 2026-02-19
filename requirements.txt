@@ -1,0 +1,15 @@
+# Web Framework & Server
+fastapi==0.128.0
+uvicorn==0.40.0
+
+# Database & Migrations
+SQLAlchemy==2.0.45
+alembic==1.18.1
+
+# Security & Auth
+python-jose[cryptography]==3.5.0
+passlib[argon2]==1.7.4
+python-multipart==0.0.21
+
+# Utilities
+python-dotenv==1.2.1
