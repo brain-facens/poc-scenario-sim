@@ -6,7 +6,7 @@ from database import Base, engine
 from routes import general_routes, users_routes
 
 # database setup
-Base.metadata.create_all(bind=engine)
+#Base.metadata.create_all(bind=engine)
 
 # app setup
 app = FastAPI(title="sql alchemy")
