@@ -13,6 +13,11 @@ from alembic import context
 
 from database import Base
 from models.users_model import User
+from models.simulation_input_model import SimulationInput
+from models.simulation_model import Simulation
+from models.material_model import Material
+from models.actor_model import Actor
+from models.scene_model import Scene
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
