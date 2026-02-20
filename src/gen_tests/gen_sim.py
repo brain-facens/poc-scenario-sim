@@ -14,7 +14,7 @@ set_default_openai_key(key=key)
 # agent = Agent(name="Assistant", instructions="You are a helpfull assistant")
 
 
-async def main(usr_input: str) -> Scenario:
+async def generate(usr_input: str) -> Scenario:
     with trace("Simulation Generator"):
         result: RunResult = await Runner.run(starting_agent=simulation_agent, input=usr_input)
         return result.final_output_as(Scenario)
@@ -22,7 +22,7 @@ async def main(usr_input: str) -> Scenario:
 
 if __name__ == "__main__":
     scenario: Scenario = asyncio.run(
-        main(
+        generate(
             "Escreva uma simulação onde um médico deve realizar um atendimento domiciliar para um idoso com medo de agulhas."
         )
     )
