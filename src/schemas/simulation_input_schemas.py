@@ -3,11 +3,9 @@ from typing import Optional, List
 from datetime import datetime
 
 class SimulationInputCreate(BaseModel):
-    """Schema for creating a new SimulationInput."""
     pitch: str
 
 class SimulationInputRead(BaseModel):
-    """Schema for reading a SimulationInput from the database."""
     id: str
     pitch: str
     created_at: datetime
@@ -19,9 +17,11 @@ class SimulationInputRead(BaseModel):
 class ActorRead(BaseModel):
     id: str
     personal_data: Optional[str]
-    current_history: Optional[str]
+    current_story: Optional[str]
+    previous_story: Optional[str]
     clothing: Optional[str]
     behavior_profile: Optional[str]
+    
     class Config:
         from_attributes = True
 
@@ -29,33 +29,42 @@ class MaterialRead(BaseModel):
     id: str
     material_name: str
     amount: int
+    
     class Config:
         from_attributes = True
 
 class SceneRead(BaseModel):
     id: str
-    name: str
-    description: Optional[str]
+    student_role: Optional[str]
+    actor_sim_role: Optional[str]
+    student_plan_b: Optional[str]
+    sequence_number: Optional[int]
+    
     class Config:
         from_attributes = True
 
-# --- Parent Simulation Schema ---
 class SimulationFullRead(BaseModel):
     id: str
-    scenario_name: Optional[str]
-    class_location: Optional[str]
-    teacher_name: Optional[str]
-    time_duration: Optional[int]
-    class_objectives: Optional[str]
-    ambience_description: Optional[str]
+    simulation_input_id: str
+    scene_organization: Optional[str]
     case_presentation: Optional[str]
-    student_briefing: Optional[str]
+    students_briefing: Optional[str]
     debriefing: Optional[str]
+    appendix: Optional[str]
     
-    # These field names must match the 'relationship' names in simulation_model.py
+    uses_simulator: int
+    students_quantity: Optional[int]
+    actors_quantity: Optional[int]
+    students_role: Optional[str]
+    actors_role: Optional[str]
+    simulator_role: Optional[str]
+    
+    simulator_parameters: Optional[str]
+    simulator_evolution_parameters: Optional[str]
+
     actors: List[ActorRead] = []
-    materials: List[MaterialRead] = []
     scenes: List[SceneRead] = []
+    materials: List[MaterialRead] = []
 
     class Config:
         from_attributes = True

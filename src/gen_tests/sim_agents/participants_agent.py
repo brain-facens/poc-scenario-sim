@@ -1,6 +1,6 @@
 from agents import Agent
-from gen_parts.participants import Participants
-from prompts.participants_prompt import participants_prompt
+from gen_tests.gen_parts.participants import Participants
+from gen_tests.prompts.participants_prompt import participants_prompt
 
 participants_agent: Agent = Agent(
     name="Participants planner",
