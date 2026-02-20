@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, ForeignKey, String, DateTime, Text
+from sqlalchemy import Column, ForeignKey, String, DateTime, Text, Integer
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -9,8 +9,11 @@ class Scene(Base):
 
     id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     
-    name = Column(String, nullable=False)
-    description = Column(Text)
+    student_role = Column(Text)
+    actor_sim_role = Column(Text)
+    student_plan_b = Column(Text)
+    
+    sequence_number = Column(Integer)
     
     simulation_id = Column(String(36), ForeignKey("simulations.id"), nullable=False)
     
