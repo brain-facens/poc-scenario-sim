@@ -4,8 +4,8 @@ import os
 from agents import Runner, set_default_openai_key, trace
 from agents.result import RunResult
 from dotenv import find_dotenv, load_dotenv
-from gen_parts.scenario import Scenario
-from sim_agents.scenario_agent import simulation_agent
+from gen_tests.gen_parts.scenario import Scenario
+from gen_tests.sim_agents.scenario_agent import simulation_agent
 
 _ = load_dotenv(dotenv_path=find_dotenv())
 assert type(key := os.getenv("OPENAI_KEY")) is str

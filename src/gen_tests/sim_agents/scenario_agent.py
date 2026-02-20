@@ -1,9 +1,9 @@
 from agents import Agent
-from gen_parts.scenario import Scenario
-from prompts.main_prompt import main_prompt
-from sim_agents.actor_agent import actor_agent
-from sim_agents.participants_agent import participants_agent
-from sim_agents.scene_agent import scene_agent
+from gen_tests.gen_parts.scenario import Scenario
+from gen_tests.prompts.main_prompt import main_prompt
+from gen_tests.sim_agents.actor_agent import actor_agent
+from gen_tests.sim_agents.participants_agent import participants_agent
+from gen_tests.sim_agents.scene_agent import scene_agent
 
 simulation_agent: Agent = Agent(
     name="Simulation Writer",

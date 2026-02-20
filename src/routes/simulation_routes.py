@@ -10,14 +10,14 @@ from services.simulation_services import create_simulation_input_service, get_si
 simulation_router = APIRouter(prefix="/simulations", tags=["simulations"])
 
 @simulation_router.post("/", response_model=SimulationInputRead, status_code=status.HTTP_201_CREATED)
-def create_simulation_input(
+async def create_simulation_input(
     simulation_input: SimulationInputCreate, 
     db: Session = Depends(get_db)
 ):
     """
     Creates a new SimulationInput record in the database using the provided pitch.
     """
-    return create_simulation_input_service(db=db, input_data=simulation_input)
+    return await create_simulation_input_service(db=db, input_data=simulation_input)
 
 @simulation_router.get("/{input_id}", response_model=List[SimulationFullRead])
 def get_simulations_by_input(input_id: str, db: Session = Depends(get_db)):

@@ -23,4 +23,4 @@ app.include_router(users_routes.users_router)
 app.include_router(simulation_routes.simulation_router)
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", reload=True)
+    uvicorn.run("app:app", reload=True, timeout_keep_alive=120)
