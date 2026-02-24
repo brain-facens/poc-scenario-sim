@@ -52,6 +52,8 @@ class SceneRead(BaseModel):
 class SimulationFullRead(BaseModel):
     id: str
     simulation_input_id: str
+    status: str
+    error: str | None = None
     scene_organization: str | None
     case_presentation: str | None
     students_briefing: str | None
