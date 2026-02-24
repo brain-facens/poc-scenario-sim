@@ -36,7 +36,9 @@ class PDF(FPDF):
 class PDFWriter:
     @staticmethod
     def write() -> str | None:
-        file_name: str = f"simulação {datetime.now().strftime('YYYY-MM-dd-hh-mm-ss')}"
+        file_name: str = (
+            f"simulação {datetime.now().strftime('YYYY-MM-dd-hh-mm-ss')}.pdf"
+        )
         pdf: PDF = PDF("P", "mm", "A4")
         pdf.alias_nb_pages()
         pdf.set_title(f"Simulação {datetime.now().strftime('YYYY-MM-dd-hh-mm-ss')}")
