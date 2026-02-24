@@ -9,6 +9,7 @@ class SimulationStatus(enum.Enum):
     COMPLETE = "complete"
     DOING = "doing"
     INTERRUPTED = "interrupted"
+    STALE = "stale"
 
 class Simulation(Base):
     __tablename__ = "simulations"
