@@ -1,8 +1,14 @@
 import uuid
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
+import enum
+from sqlalchemy import Column, Enum, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
+
+class SimulationStatus(enum.Enum):
+    COMPLETE = "complete"
+    DOING = "doing"
+    INTERRUPTED = "interrupted"
 
 class Simulation(Base):
     __tablename__ = "simulations"
@@ -25,6 +31,9 @@ class Simulation(Base):
 
     simulator_parameters = Column(Text)
     simulator_evolution_parameters = Column(Text)
+    
+    status = Column(Enum(SimulationStatus), default=SimulationStatus.DOING, nullable=False)
+    error = Column(String, nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
