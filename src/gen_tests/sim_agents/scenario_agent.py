@@ -8,6 +8,7 @@ from gen_tests.sim_agents.scene_agent import scene_agent
 simulation_agent: Agent = Agent(
     name="Simulation Writer",
     instructions=main_prompt,
+    model="gpt-4o-mini",
     output_type=Scenario,
     tools=[
         participants_agent.as_tool(
