@@ -215,6 +215,8 @@ async def process_stale_queue(db: Session):
     next_sim = db.query(Simulation).filter(
         Simulation.status == SimulationStatus.STALE
     ).order_by(Simulation.created_at.desc()).first()
+    
+    print(f"Watchdog: Found next stale simulation: {next_sim.id if next_sim else None}")
 
     if next_sim:
         next_sim.status = SimulationStatus.DOING
