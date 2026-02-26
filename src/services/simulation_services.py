@@ -2,7 +2,8 @@ import asyncio
 import traceback
 
 from fastapi import BackgroundTasks
-from datetime import datetime
+from sqlalchemy import func
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 
 from gen_tests.gen_parts.scenario import Scenario
@@ -182,3 +183,48 @@ async def run_mock_generation_task(input_id: str, simulation_id: str, delay: int
             db.commit()
     finally:
         db.close()
+        
+def cleanup_timed_out_simulations(db: Session, timeout_minutes: int = 3):
+    now = datetime.now(timezone.utc)
+    threshold = now - timedelta(minutes=timeout_minutes)
+    print(f"Watchdog: Checking for simulations stuck since before {threshold.isoformat()}")
+    
+    timed_out_sims = db.query(Simulation).filter(
+        Simulation.status == SimulationStatus.DOING,
+        func.coalesce(Simulation.updated_at, Simulation.created_at) < threshold
+    ).all()
+    
+    print(f"Watchdog: Found {len(timed_out_sims)} timed-out simulations.")
+
+    for sim in timed_out_sims:
+        sim.status = SimulationStatus.INTERRUPTED
+        sim.error = "hard timeout error"
+    
+    db.commit()
+    return len(timed_out_sims)
+
+async def process_stale_queue(db: Session):
+    """Promotes the most recent STALE simulation to DOING if none are active."""
+    active_job = db.query(Simulation).filter(
+        Simulation.status == SimulationStatus.DOING
+    ).first()
+    
+    if active_job:
+        return None
+
+    next_sim = db.query(Simulation).filter(
+        Simulation.status == SimulationStatus.STALE
+    ).order_by(Simulation.created_at.desc()).first()
+
+    if next_sim:
+        next_sim.status = SimulationStatus.DOING
+        db.commit()
+        
+        asyncio.create_task(run_simulation_generation_task(
+            next_sim.simulation_input_id, 
+            next_sim.id, 
+            next_sim.simulation_input.pitch
+        ))
+        return next_sim.id
+    
+    return None

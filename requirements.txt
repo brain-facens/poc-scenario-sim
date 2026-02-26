@@ -13,6 +13,7 @@ python-multipart==0.0.21
 
 # Utilities
 python-dotenv==1.2.1
+fastapi-utilities
 
 # OpenAI
 openai-agents==0.9.2
