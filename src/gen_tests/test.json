@@ -1,43 +1,50 @@
 {
-    "scene_organization": "A simulação é dividida em três cenas principais, ocorrendo em um ambiente simulado que representa a casa de um idoso. Será utilizada uma sala que simule uma sala de estar residencial equipada conforme orientado pelo cenário. O caso envolve o atendimento a um paciente idoso, cuja queixa demanda coleta de exames laboratoriais. Um ator representará o idoso, e alunos desempenharão o papel do médico visitante.",
+    "scene_organization": "Simulação de Atendimento Domiciliar para Idoso com Medo de Agulhas",
     "scene_participants": {
-        "uses_simulator": false,
+        "uses_simulator": true,
         "students_quantity": 1,
-        "actors_quantity": 1,
-        "students_role": "Médico responsável pelo atendimento domiciliar.",
-        "actors_role": "Idoso (paciente) com medo de agulhas, relutante em permitir procedimentos invasivos.",
-        "simulator_role": ""
+        "actors_quantity": 2,
+        "students_role": "Médico residente (praticante)",
+        "actors_role": "Idoso com medo de agulhas e enfermeira orientadora",
+        "simulator_role": "Monitorar protocolos e avaliar conduta médica"
     },
-    "case_presentation": "Idoso apresenta sintomas inespecíficos (fadiga, dores musculares, inapetência) que sugerem necessidade de exames laboratoriais para esclarecimento diagnóstico. No entanto, ele tem histórico conhecido de fobia de agulhas, dificultando procedimentos invasivos em atendimentos anteriores.",
+    "case_presentation": "**Cenário:** Um idoso de 78 anos com histórico de hipertensão e diabetes apresenta dificuldade para medir glicose devido ao medo de agulhas. O objetivo é realizar a coleta de sangue para controle metabólico, usando abordagem humanizada.",
     "actor_briefing": [
         {
-            "personal_data": "Nome: Joaquim dos Santos, 78 anos. Mora só, lúcido, independente. Histórico de hipertensão e DM2 controladas.",
-            "current_story": "Vem apresentando há 5 dias cansaço, inapetência, episódios de tontura ocasional e dores musculares leves. Queixa-se que sempre que precisa 'tirar sangue', sente medo, ansiedade e chega a tremer/não deixa ninguém fazer.",
-            "previous_story": "Já se recusou em UBS e hospital a realizar exames por pavor de agulhas. Relata que na infância passou por experiências traumáticas e que só aceita procedimentos se sentir-se tranquilo e seguro.",
-            "clothing": "Pijama, chinelos, sentado em poltrona com manta cobrindo pernas.",
-            "behavior_profile": "Inicia a consulta colaborativo, mas fica claramente ansioso quando percebe que será sugerida coleta de sangue. Tremores nas mãos, respiração acelerada, olhar evasivo, repete várias vezes: 'Eu não gosto disso, doutor'. Caso insistam sem abordar o medo, ele recusa firmemente."
+            "personal_data": "Idoso com 78 anos, idoso, portador de diabetes tipo 2 e hipertensão, com histórico de trauma com agulhas em infância",
+            "current_story": "Reclama dor no braço direito e evita qualquer contato com agulhas. Exige que a coleta seja feita no braço esquerdo, mas tem medo de sentir dor.",
+            "previous_story": "Foi submetido a hemocultura há 6 meses por sepse, o que agravou o medo",
+            "clothing": "Roupas de casa e um bracelete com medidor de tensão arterial",
+            "behavior_profile": "Reativo, com tremores nas mãos e evita contato visual. Acessa informações sobre diabetes na internet e tem ideia fixa de que agulhas são 'perigosas'"
+        },
+        {
+            "personal_data": "Enfermeira de plantão, 35 anos, com experiência em atendimento domiciliar",
+            "current_story": "Auxilia o médico em situações de ansiedade do paciente, usando técnicas de descontração e comunicação simpatética",
+            "previous_story": "Já atendeu 12 casos semelhantes com sucesso",
+            "clothing": "Uniforme hospitalar com mangas curtas e um kit de atendimento",
+            "behavior_profile": "Calma, com habilidades em psicoterapia ocupacional básica e comunicação não violenta"
         }
     ],
-    "simulator_parameters": "",
-    "simulator_evolution_parameters": "",
-    "students_briefing": "Você é o médico responsável pelo atendimento domiciliar de Joaquim dos Santos, 78 anos, que apresenta sintomas inespecíficos nas últimas 72h. Precisa investigar causas orgânicas e, provavelmente, solicitar exames de sangue. No entanto, Joaquim tem medo intenso de agulhas, conforme relatado pela equipe da UBS e familiares. Seu objetivo é realizar o atendimento respeitando a autonomia do paciente, abordando de maneira adequada seu medo, criando vínculo e tentando, se possível, proceder à coleta de sangue.",
+    "simulator_parameters": "Monitorar a aderência aos protocolos de biosegurança, verificar a eficácia das técnicas de anestesia local e avaliar a capacidade de lidar com reações adversas",
+    "simulator_evolution_parameters": "**Critérios de sucesso:**\n- 100% de adesão ao protocolo de manipulação de agulhas\n- Redução de 50% na ansiedade do paciente (escala visual analógica)\n- Ausência de complicações durante a coleta\n- 100% de satisfação do paciente no feedback final",
+    "students_briefing": "**Objetivos:**\n1. Realizar coleta de sangue de forma segura e humanizada\n2. Aplicar anestésico local corretamente\n3. Gerenciar a ansiedade do paciente com técnicas de comunicação\n4. Registrar todos os passos do atendimento\n\n**Plano B:**\n- Se o paciente continuar com medo, substituir agulha por microsangria (técnicas de punção superficial)\n- Usar distratores sensoriais (música ou conversa) durante o procedimento\n- Solicitar ajuda da enfermeira para manter o braço do paciente imóvel",
     "scene_flow": [
         {
-            "student_role": "Médico inicia consulta domiciliar, realiza anamnese empática, explora sintomas e histórico de saúde. Observa sinais de ansiedade relacionados à presença de materiais para coleta.",
-            "actor_sim_role": "Paciente inicia colaborativo, mas demonstra inquietação à menção de exames, verbaliza e apresenta sinais não verbais de desconforto.",
-            "student_plan_b": "Caso perceba ansiedade acentuada, pode suspender sugestão de coleta nesta visita, reforçando relação de confiança e propondo retorno ou estratégias apropriadas de dessensibilização futura."
+            "student_role": "Médico residente",
+            "actor_sim_role": "Idoso",
+            "student_plan_b": "Usar microsangria se necessário"
         },
         {
-            "student_role": "Explora e valida sentimentos do paciente, utiliza técnicas de comunicação empática (escuta ativa, validação de sentimentos, explicações claras sobre necessidade e riscos). Tenta estratégias de dessensibilização ou distração gradual.",
-            "actor_sim_role": "Paciente relata experiências passadas traumáticas, responde positivamente se sentir que suas emoções são compreendidas, podendo aceitar observar ou manusear o material; resiste caso pressão seja excessiva ou clima não seja seguro.",
-            "student_plan_b": "Caso o paciente insista no medo, médico pode sugerir métodos alternativos (exames menos invasivos, acompanhamento clínico mais próximo) e reforçar que decisão será respeitada."
+            "student_role": "Médico residente",
+            "actor_sim_role": "Enfermeira",
+            "student_plan_b": "Reforçar técnicas de punção superficial"
         },
         {
-            "student_role": "Se o medo for parcialmente superado, procede, com consentimento, à coleta de sangue de modo gentil e respeitoso. Oferece estratégias de enfrentamento (respiração, distração, convidar acompanhante etc.). Garante apoio emocional após o procedimento.",
-            "actor_sim_role": "Paciente tenta colaborar, mesmo ansioso. Pode cumprir o procedimento, agradecendo. Em caso de recusa, reitera aversão mas valoriza abordagem cuidadosa do médico.",
-            "student_plan_b": "Se a coleta for impossível, médico documenta recusa, orienta sinais de alarme, reforça a confiança para eventual necessidade futura de exames, e agenda reavaliação."
+            "student_role": "Méd, enfermeira",
+            "actor_sim_role": "Idoso",
+            "student_plan_b": "Avaliar hospitalização para monitoramento"
         }
     ],
-    "debriefing": "Ao final, discutir como foi abordado o medo do paciente, se as técnicas de comunicação empática foram eficazes, impacto da tentativa de coleta versus respeito à autonomia, e identificar o que poderia ser feito diferente em futuras situações semelhantes. Estimular alunos a refletirem sobre estratégias para lidar com pacientes com fobias em diferentes contextos.",
-    "appendix": "- Materiais sugeridos: poltrona, manta, jaleco, bandeja para coleta de sangue (não obrigatoriamente utilizada), seringas, luvas.\n- Sugestão: envolver ator em breve treinamento prévio sobre demonstração de ansiedade plausível.\n- Recomenda-se tempo total de simulação de 30 minutos, incluindo briefing, execução das cenas e debriefing."
+    "debriefing": "**Avaliação Final:**\n- Análise da eficácia da comunicação do médico\n- Verificação da correta aplicação de técnicas de anestesia\n- Registro da resposta emocional do paciente\n- Identificação de lacunas na abordagem",
+    "appendix": "*Sugestão: Se o paciente rechaçar qualquer procedimento, considerar o uso de dispositivos de coleta de sangue sem agulhas (ex: lancetas de microsangria) como alternativa para evitar danos psicológicos*"
 }

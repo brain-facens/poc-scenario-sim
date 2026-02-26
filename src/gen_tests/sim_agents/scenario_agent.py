@@ -1,9 +1,16 @@
-from agents import Agent
-from gen_tests.gen_parts.scenario import Scenario
-from gen_tests.prompts.main_prompt import main_prompt
-from gen_tests.sim_agents.actor_agent import actor_agent
-from gen_tests.sim_agents.participants_agent import participants_agent
-from gen_tests.sim_agents.scene_agent import scene_agent
+from agents import Agent, OpenAIChatCompletionsModel
+from gen_parts.scenario import Scenario
+from openai import AsyncOpenAI
+from prompts.main_prompt import main_prompt
+from sim_agents.actor_agent import actor_agent
+from sim_agents.participants_agent import participants_agent
+from sim_agents.scene_agent import scene_agent
+
+local_client: AsyncOpenAI = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="sk_123")
+
+model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
+    model="qwen3:8b", openai_client=local_client
+)
 
 simulation_agent: Agent = Agent(
     name="Simulation Writer",
@@ -23,4 +30,5 @@ simulation_agent: Agent = Agent(
             tool_description="Writes scenes based on case and previously generated scenes",
         ),
     ],
+    model=model,
 )
