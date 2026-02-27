@@ -2,10 +2,11 @@ import asyncio
 
 from agents import Runner, trace
 from agents.result import RunResult
-from gen_parts.scenario import Scenario
-from sim_agents.html_agent import html_agent
-from sim_agents.scenario_agent import simulation_agent
 from weasyprint import HTML
+
+from gen_tests.gen_parts.scenario import Scenario
+from gen_tests.sim_agents.html_agent import html_agent
+from gen_tests.sim_agents.scenario_agent import simulation_agent
 
 # _ = load_dotenv(dotenv_path=find_dotenv())
 # assert type(key := os.getenv("OPENAI_KEY")) is str
@@ -32,6 +33,9 @@ if __name__ == "__main__":
             "Escreva uma simulação onde um médico deve realizar um atendimento domiciliar para um idoso com medo de agulhas."
         )
     )
+
+    scenario = scenario.removeprefix("```html")
+    scenario = scenario.removesuffix("```")
 
     if scenario:
         _ = HTML(string=scenario).write_pdf("test.pdf")

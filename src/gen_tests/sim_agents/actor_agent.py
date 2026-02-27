@@ -1,7 +1,8 @@
 from agents import Agent, OpenAIChatCompletionsModel
-from gen_parts.actor_briefing import ActorBriefing
 from openai import AsyncOpenAI
-from prompts.actor_prompt import actor_prompt
+
+from gen_tests.gen_parts.actor_briefing import ActorBriefing
+from gen_tests.prompts.actor_prompt import actor_prompt
 
 local_client: AsyncOpenAI = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="sk_123")
 
@@ -13,5 +14,5 @@ actor_agent: Agent = Agent(
     name="Actor Briefing",
     instructions=actor_prompt,
     output_type=ActorBriefing,
-    model=model,
+    model="gpt-4o-mini",
 )

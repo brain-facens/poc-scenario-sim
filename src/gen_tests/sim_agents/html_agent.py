@@ -1,7 +1,8 @@
 from agents import Agent, OpenAIChatCompletionsModel
-from gen_parts.scenario import Scenario
 from openai import AsyncOpenAI
-from prompts.html_prompt import html_prompt
+
+from gen_tests.gen_parts.scenario import Scenario
+from gen_tests.prompts.html_prompt import html_prompt
 
 local_client: AsyncOpenAI = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="sk_123")
 
@@ -12,5 +13,5 @@ model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
 html_agent: Agent = Agent[Scenario](
     name="Actor Briefing",
     instructions=html_prompt,
-    model=model,
+    model="gpt-4o-mini",
 )
