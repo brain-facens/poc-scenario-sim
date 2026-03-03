@@ -4,12 +4,15 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from weasyprint import HTML
 
+from gen_tests.gen_parts.scenario import Scenario
 from gen_tests.gen_sim import generate
 from models import Actor, Scene, Simulation, SimulationInput
 from schemas.simulation_input_schemas import SimulationInputCreate
 
 
-async def create_simulation_input_service(db: Session, input_data: SimulationInputCreate):
+async def create_simulation_input_service(
+    db: Session, input_data: SimulationInputCreate
+):
     """
     Creates a new SimulationInput record and populates the simulation
     tables with generated data from the LLM.
@@ -67,7 +70,7 @@ async def create_simulation_input_service(db: Session, input_data: SimulationInp
     return db_input
 
 
-async def simulation_gen(usr_input: str) -> str:
+async def simulation_gen(usr_input: str) -> Scenario:
     """
     Generates a simulation based on input string
 
@@ -77,7 +80,10 @@ async def simulation_gen(usr_input: str) -> str:
     Returns:
         Scenario: Structured llm output.
     """
-    return asyncio.run(main=generate(usr_input=usr_input))
+    scenario: Scenario = asyncio.run(main=generate(usr_input=usr_input))
+    with open("./scenarios/test.json", "w", encoding="utf-8") as file:
+        file.write(scenario.model_dump_json(indent=4))
+    return scenario
 
 
 async def generate_pdf(pdf_html: str) -> bytes | None:
@@ -143,4 +149,8 @@ def get_simulations_by_input_id_service(db: Session, simulation_input_id: str):
     SQLAlchemy's lazy loading will handle fetching actors/materials/scenes
     when the Pydantic schema accesses those attributes.
     """
-    return db.query(Simulation).filter(Simulation.simulation_input_id == simulation_input_id).all()
+    return (
+        db.query(Simulation)
+        .filter(Simulation.simulation_input_id == simulation_input_id)
+        .all()
+    )

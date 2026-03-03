@@ -4,7 +4,9 @@ from openai import AsyncOpenAI
 from gen_tests.gen_parts.actor_briefing import ActorBriefing
 from gen_tests.prompts.actor_prompt import actor_prompt
 
-local_client: AsyncOpenAI = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="sk_123")
+local_client: AsyncOpenAI = AsyncOpenAI(
+    base_url="http://localhost:11434/v1", api_key="sk_123"
+)
 
 model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
     model="qwen3:8b", openai_client=local_client

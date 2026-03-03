@@ -7,7 +7,9 @@ from gen_tests.sim_agents.actor_agent import actor_agent
 from gen_tests.sim_agents.participants_agent import participants_agent
 from gen_tests.sim_agents.scene_agent import scene_agent
 
-local_client: AsyncOpenAI = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="sk_123")
+local_client: AsyncOpenAI = AsyncOpenAI(
+    base_url="http://localhost:11434/v1", api_key="sk_123"
+)
 
 model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
     model="qwen3:8b", openai_client=local_client
