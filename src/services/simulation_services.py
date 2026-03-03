@@ -7,6 +7,7 @@ from weasyprint import HTML
 from gen_tests.gen_parts.scenario import Scenario
 from gen_tests.gen_sim import generate
 from models import Actor, Scene, Simulation, SimulationInput
+from models.material_model import Material
 from schemas.simulation_input_schemas import SimulationInputCreate
 
 
@@ -53,6 +54,14 @@ async def create_simulation_input_service(
             simulation_id=new_simulation.id,
         )
         db.add(db_actor)
+    
+    for resource in scenario_data.necessary_resources:
+        db_material = Material(
+            material_name=resource.name,
+            amount=resource.quantity,
+            simulation_id=new_simulation.id,
+        )
+        db.add(db_material)
 
     for index, scene_data in enumerate(scenario_data.scene_flow):
         db_scene = Scene(

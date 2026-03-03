@@ -10,7 +10,8 @@ class Simulation(Base):
     id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     simulation_input_id = Column(String(36), ForeignKey("simulation_inputs.id"), nullable=False)
 
-    scene_organization = Column(Text) 
+    scene_organization = Column(Text)
+    learning_objectives = Column(Text)
     case_presentation = Column(Text)
     students_briefing = Column(Text)
     debriefing = Column(Text)
@@ -32,3 +33,4 @@ class Simulation(Base):
     simulation_input = relationship("SimulationInput", back_populates="simulations")
     actors = relationship("Actor", back_populates="simulation", cascade="all, delete-orphan")
     scenes = relationship("Scene", back_populates="simulation", cascade="all, delete-orphan")
+    materials = relationship("Material", back_populates="simulation", cascade="all, delete-orphan")
