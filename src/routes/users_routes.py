@@ -48,6 +48,10 @@ def get_user(
 ):
     return get_user_by_id_service(db=db, user_id=user_id)
 
+@users_router.get("/me/", response_model=UserRead)
+async def get_my_profile(current_user: User = Depends(get_current_user)):
+    return current_user
+
 @users_router.patch("/{user_id}", response_model=UserRead)
 def update_user(
     user_id: str,
