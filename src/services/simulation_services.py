@@ -39,6 +39,7 @@ async def create_simulation_input_service(
         simulator_role=scenario_data.scene_participants.simulator_role,
         simulator_parameters=scenario_data.simulator_parameters,
         simulator_evolution_parameters=scenario_data.simulator_evolution_parameters,
+        pdf_path=scenario_data.pdf_path,
     )
     db.add(new_simulation)
     db.flush()
@@ -88,15 +89,18 @@ async def simulation_gen(usr_input: str) -> Scenario:
     Returns:
         Scenario: Structured llm output.
     """
-    scenario: Scenario = asyncio.run(main=generate(usr_input=usr_input))
+    print("Generating scenario...")
+    scenario: Scenario = await generate(usr_input=usr_input)
     with open("./scenarios/test.json", "w", encoding="utf-8") as file:
         file.write(scenario.model_dump_json(indent=4))
+    print("Scenario generated, generating PDF...")
+    scenario.pdf_path = await generate_pdf(scenario)
+    print("Done!")
     return scenario
 
 
-async def generate_pdf(sim_data: Simulation) -> str:
-    scenario: Scenario = sim_data.to_scenario()
-    return await export_pdf(scenario)
+async def generate_pdf(sim_data: Scenario) -> str:
+    return await export_pdf(sim_data)
 
 
 def create_mock_simulation_service(db: Session, simulation_input_id: str):

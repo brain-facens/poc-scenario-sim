@@ -19,3 +19,4 @@ class Scenario(BaseModel):
     scene_flow: list[Scene]
     debriefing: str
     appendix: str
+    pdf_path: str

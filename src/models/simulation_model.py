@@ -1,6 +1,5 @@
 import uuid
 
-from pydantic import StrictFloat
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -11,7 +10,6 @@ from gen_tests.gen_parts.participants import Participants
 from gen_tests.gen_parts.resource import Resource
 from gen_tests.gen_parts.scenario import Scenario
 from gen_tests.gen_parts.scene import Scene as GenScene
-from models.scene_model import Scene
 
 
 class Simulation(Base):
@@ -98,4 +96,5 @@ class Simulation(Base):
             ],
             debriefing=str(self.debriefing),
             appendix=str(self.appendix),
+            pdf_path=str(self.pdf_path),
         )

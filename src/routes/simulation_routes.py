@@ -56,9 +56,9 @@ async def generate_simulation_pdf(input_id: str, db: Session = Depends(get_db)):
         )
 
     sim_data: Simulation = simulations[0]
-    pdf_path: str = await generate_pdf(sim_data)
+    # pdf_path: str = await generate_pdf(sim_data)
     return FileResponse(
-        path=pdf_path,
+        path=str(sim_data.pdf_path),
         filename="simulation.pdf",
         media_type="application/pdf",
     )
