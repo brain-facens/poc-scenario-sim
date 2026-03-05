@@ -2,10 +2,13 @@ from pydantic import BaseModel
 
 from .actor_briefing import ActorBriefing
 from .participants import Participants
+from .resource import Resource
 from .scene import Scene
 
 
 class Scenario(BaseModel):
+    learning_objectives: str
+    necessary_resources: list[Resource]
     scene_organization: str
     scene_participants: Participants
     case_presentation: str
@@ -16,3 +19,4 @@ class Scenario(BaseModel):
     scene_flow: list[Scene]
     debriefing: str
     appendix: str
+    pdf_path: str

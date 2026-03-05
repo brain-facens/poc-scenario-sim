@@ -4,9 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_utilities import repeat_every
 
-from database import SessionLocal
-from routes import general_routes, users_routes, simulation_routes
-from services.simulation_services import cleanup_timed_out_simulations, process_stale_queue
+from routes import general_routes, simulation_routes, users_routes
 
 @repeat_every(seconds=60)
 async def simulation_watchdog():

@@ -17,3 +17,6 @@ fastapi-utilities
 
 # OpenAI
 openai-agents==0.9.2
+
+# Project
+weasyprint==68.1
