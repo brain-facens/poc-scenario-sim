@@ -1,7 +1,7 @@
 import io
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from starlette.responses import FileResponse
@@ -18,6 +18,7 @@ from services.simulation_services import (
     generate_pdf,
     get_all_simulation_ids_service,
     get_simulations_by_input_id_service,
+    create_mock_simulation_async_service,
 )
 
 simulation_router = APIRouter(prefix="/simulations", tags=["simulations"])
@@ -27,7 +28,9 @@ simulation_router = APIRouter(prefix="/simulations", tags=["simulations"])
     "/", response_model=SimulationInputRead, status_code=status.HTTP_201_CREATED
 )
 async def create_simulation_input(
-    simulation_input: SimulationInputCreate, db: Session = Depends(get_db)
+    simulation_input: SimulationInputCreate, 
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
 ):
     """
     Creates a new SimulationInput record in the database using the provided pitch.
