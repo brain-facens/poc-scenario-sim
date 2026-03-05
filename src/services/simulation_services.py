@@ -116,6 +116,8 @@ async def simulation_gen(usr_input: str) -> Scenario:
     """
     print("Generating scenario...")
     scenario: Scenario = await generate(usr_input=usr_input)
+    import os
+    os.makedirs("./scenarios", exist_ok=True)
     with open("./scenarios/test.json", "w", encoding="utf-8") as file:
         file.write(scenario.model_dump_json(indent=4))
     print("Scenario generated, generating PDF...")

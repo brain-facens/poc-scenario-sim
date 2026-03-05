@@ -19,6 +19,8 @@ async def export_pdf(scenario: Scenario) -> str:
     sim_data = sim_data.removesuffix("```")
 
     date: str = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    import os
     path: str = f"./pdf_exports/simulação-{date}.pdf"
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     _ = HTML(string=sim_data).write_pdf(path)
     return path
