@@ -7,7 +7,7 @@ from gen_tests.gen_parts.scenario import Scenario
 from gen_tests.sim_agents.html_agent import html_agent
 
 
-async def export_pdf(scenario: Scenario) -> bytes | None:
+async def export_pdf(scenario: Scenario) -> str:
     output: RunResult = await Runner.run(
         starting_agent=html_agent,
         input=scenario.model_dump_json(indent=4),
@@ -19,4 +19,6 @@ async def export_pdf(scenario: Scenario) -> bytes | None:
     sim_data = sim_data.removesuffix("```")
 
     date: str = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    return HTML(string=sim_data).write_pdf(f"./pdf_exports/{date}")
+    path: str = f"./pdf_exports/simulação-{date}.pdf"
+    _ = HTML(string=sim_data).write_pdf(path)
+    return path

@@ -1,9 +1,8 @@
 import asyncio
-from datetime import datetime
 
 from sqlalchemy.orm import Session
-from weasyprint import HTML
 
+from gen_tests.export_sim import export_pdf
 from gen_tests.gen_parts.scenario import Scenario
 from gen_tests.gen_sim import generate
 from models import Actor, Scene, Simulation, SimulationInput
@@ -23,7 +22,7 @@ async def create_simulation_input_service(
     db.commit()
     db.refresh(db_input)
 
-    scenario_data = await generate(input_data.pitch)
+    scenario_data = await simulation_gen(input_data.pitch)
 
     new_simulation = Simulation(
         simulation_input_id=db_input.id,
@@ -54,7 +53,7 @@ async def create_simulation_input_service(
             simulation_id=new_simulation.id,
         )
         db.add(db_actor)
-    
+
     for resource in scenario_data.necessary_resources:
         db_material = Material(
             material_name=resource.name,
@@ -95,9 +94,9 @@ async def simulation_gen(usr_input: str) -> Scenario:
     return scenario
 
 
-async def generate_pdf(pdf_html: str) -> bytes | None:
-    date: str = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    return HTML(string=pdf_html).write_pdf(f"./pdf-forge-exports/{date}")
+async def generate_pdf(sim_data: Simulation) -> str:
+    scenario: Scenario = sim_data.to_scenario()
+    return await export_pdf(scenario)
 
 
 def create_mock_simulation_service(db: Session, simulation_input_id: str):
@@ -163,3 +162,10 @@ def get_simulations_by_input_id_service(db: Session, simulation_input_id: str):
         .filter(Simulation.simulation_input_id == simulation_input_id)
         .all()
     )
+
+
+def get_all_simulation_ids_service(db: Session):
+    """
+    Retrieves all simulation IDs from the database.
+    """
+    return db.query(Simulation).distinct().all()

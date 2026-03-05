@@ -2,8 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from database import Base, engine
-from routes import general_routes, users_routes, simulation_routes
+from routes import general_routes, simulation_routes, users_routes
 
 # database setup
 # Base.metadata.create_all(bind=engine)

@@ -5,6 +5,7 @@ from agents import Runner, set_default_openai_key, trace
 from agents.result import RunResult
 from dotenv import find_dotenv, load_dotenv
 
+from gen_tests.export_sim import export_pdf
 from gen_tests.gen_parts.scenario import Scenario
 from gen_tests.sim_agents.scenario_agent import simulation_agent
 
@@ -46,3 +47,5 @@ if __name__ == "__main__":
     if scenario:
         with open("test.json", "w", encoding="utf-8") as file:
             _ = file.write(scenario.model_dump_json(indent=4))
+
+        asyncio.run(export_pdf(scenario))

@@ -2,7 +2,7 @@ from typing import LiteralString
 
 html_prompt: LiteralString = """
 Sua tarefa é receber uma simulação estruturada e convertê-la para uma formatação HTML. Distribua os
-campos em sessões e tabelas seguindo o template expecificado abaixo. Não altere nenhum texto que 
+campos em sessões e tabelas seguindo o template expecificado abaixo. Não altere nenhum texto que
 você receber e não tente preencher campos que estão vazios.
 
 ```html
@@ -484,7 +484,5 @@ você receber e não tente preencher campos que estão vazios.
 
 </body>
 </html>
-Template_Cenario_Facens.html
-16 KB
-``` 
+```
 """.strip()
