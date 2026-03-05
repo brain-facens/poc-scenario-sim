@@ -73,6 +73,9 @@ class SimulationFullRead(BaseModel):
     actors: list[ActorRead] = []
     scenes: list[SceneRead] = []
     materials: list[MaterialRead] = []
+    
+    created_at: datetime
+    updated_at: datetime | None = None
 
     class Config:
         from_attributes: bool = True
