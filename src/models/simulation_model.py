@@ -30,6 +30,7 @@ class Simulation(Base):
     students_briefing = Column(Text)
     debriefing = Column(Text)
     appendix = Column(Text)
+    pdf_path = Column(String(255), nullable=True)
 
     uses_simulator = Column(Integer, default=0)
     students_quantity = Column(Integer)
