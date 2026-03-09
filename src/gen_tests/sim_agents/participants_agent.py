@@ -16,5 +16,5 @@ participants_agent: Agent = Agent(
     name="Participants planner",
     instructions=participants_prompt,
     output_type=Participants,
-    model="gpt-4o-mini",
+    model=model,
 )

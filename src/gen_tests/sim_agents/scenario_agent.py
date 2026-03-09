@@ -18,7 +18,6 @@ model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
 simulation_agent: Agent = Agent(
     name="Simulation Writer",
     instructions=main_prompt,
-    model="gpt-4o-mini",
     output_type=Scenario,
     tools=[
         participants_agent.as_tool(
@@ -34,4 +33,5 @@ simulation_agent: Agent = Agent(
             tool_description="Writes scenes based on case and previously generated scenes",
         ),
     ],
+    model=model,  # "gpt-4o-mini"
 )

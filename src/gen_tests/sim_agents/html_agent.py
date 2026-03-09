@@ -15,5 +15,5 @@ model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
 html_agent: Agent = Agent[Scenario](
     name="Actor Briefing",
     instructions=html_prompt,
-    model="gpt-4o-mini",
+    model=model,  # "gpt-4o-mini"
 )
