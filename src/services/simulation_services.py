@@ -12,7 +12,7 @@ from gen_tests.gen_sim import generate
 from models import Actor, Scene, Simulation, SimulationInput
 from models.material_model import Material
 from models.simulation_model import SimulationStatus
-from schemas.simulation_input_schemas import SimulationInputCreate
+from schemas.simulation_input_schemas import SimulationInputCreate, SimulationUpdateSchema
 
 
 async def create_simulation_input_service(
@@ -334,3 +334,19 @@ async def process_stale_queue(db: Session):
         return next_sim.id
 
     return None
+
+
+def update_simulation_service(db: Session, simulation_id: str, update_data: SimulationUpdateSchema):
+    simulation = db.query(Simulation).filter(Simulation.id == simulation_id).first()
+    
+    if not simulation:
+        return None
+
+    update_dict = update_data.model_dump(exclude_unset=True)
+    
+    for key, value in update_dict.items():
+        setattr(simulation, key, value)
+    
+    db.commit()
+    db.refresh(simulation)
+    return simulation

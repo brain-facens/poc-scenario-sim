@@ -12,6 +12,7 @@ from schemas.simulation_input_schemas import (
     SimulationFullRead,
     SimulationInputCreate,
     SimulationInputRead,
+    SimulationUpdateSchema,
 )
 from services.simulation_services import (
     create_simulation_input_service,
@@ -19,6 +20,7 @@ from services.simulation_services import (
     get_all_simulation_ids_service,
     get_simulations_by_input_id_service,
     create_mock_simulation_async_service,
+    update_simulation_service,
 )
 
 simulation_router = APIRouter(prefix="/simulations", tags=["simulations"])
@@ -73,3 +75,17 @@ def list_simulations(db: Session = Depends(get_db)):
     Returns a list of all simulations in the database.
     """
     return get_all_simulation_ids_service(db)
+
+@simulation_router.patch("/{simulation_id}", response_model=SimulationFullRead)
+def update_simulation(
+    simulation_id: str,
+    update_data: SimulationUpdateSchema,
+    db: Session = Depends(get_db)
+):
+    """
+    Updates specific fields of an existing simulation.
+    """
+    updated_sim = update_simulation_service(db, simulation_id, update_data)
+    if not updated_sim:
+        raise HTTPException(status_code=404, detail="Simulation not found")
+    return updated_sim
