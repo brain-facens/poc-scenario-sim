@@ -40,25 +40,26 @@ async def create_simulation_input(
 
 
 
-@simulation_router.get("/{simulation_id}/pdf", response_class=FileResponse)
-async def get_simulation_pdf(simulation_id: str, db: Session = Depends(get_db)):
+@simulation_router.post("/{simulation_id}/pdf")
+async def trigger_pdf_generation(
+    simulation_id: str, 
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
     """
-    GENERATES a new PDF for a specific simulation and updates the record.
-    Use this endpoint to refresh the PDF content if the simulation data has changed.
+    Triggers the generation of a new PDF for a specific simulation in the background.
     """
-    pdf_path = await generate_and_save_pdf_service(db, simulation_id=simulation_id)
+    success = await generate_and_save_pdf_service(
+        db, simulation_id=simulation_id, background_tasks=background_tasks
+    )
     
-    if not pdf_path:
+    if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
             detail="Simulation not found"
         )
 
-    return FileResponse(
-        path=pdf_path,
-        filename=f"simulation_{simulation_id}.pdf",
-        media_type="application/pdf",
-    )
+    return {"message": "PDF generation started"}
 
 
 @simulation_router.get("/pdf/{simulation_id}", response_class=FileResponse)
@@ -76,6 +77,11 @@ async def fetch_simulation_pdf(simulation_id: str, db: Session = Depends(get_db)
         path=str(simulation.pdf_path),
         filename=f"simulation_{simulation_id}.pdf",
         media_type="application/pdf",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
     )
 
 

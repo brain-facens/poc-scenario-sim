@@ -11,7 +11,7 @@ from gen_tests.gen_parts.scenario import Scenario
 from gen_tests.gen_sim import generate
 from models import Actor, Scene, Simulation, SimulationInput
 from models.material_model import Material
-from models.simulation_model import SimulationStatus
+from models.simulation_model import SimulationStatus, PdfStatus
 from schemas.simulation_input_schemas import SimulationInputCreate, SimulationUpdateSchema
 
 
@@ -91,14 +91,23 @@ async def run_simulation_generation_task(input_id: str, simulation_id: str, pitc
             )
             db.add(db_scene)
 
-        print("Scenario generated, generating PDF...")
-        new_simulation.pdf_path = await export_pdf(scenario_data)
+        print(f"Scenario generated for {simulation_id}, generating PDF...")
+        new_simulation.pdf_status = PdfStatus.GENERATING
+        db.commit()
+
+        pdf_result_path = await export_pdf(scenario_data)
+        new_simulation.pdf_path = pdf_result_path
+        new_simulation.pdf_status = PdfStatus.READY
+        new_simulation.updated_at = func.now()
 
         db.commit()
+        db.refresh(new_simulation)
+        print(f"✅ Initial PDF generated and saved to: {pdf_result_path}")
     except Exception:
         db.rollback()
         sim = db.query(Simulation).filter(Simulation.id == simulation_id).first()
         sim.status = SimulationStatus.INTERRUPTED
+        sim.pdf_status = PdfStatus.ERROR
         sim.error = traceback.format_exc()
         db.commit()
     finally:
@@ -355,19 +364,49 @@ def update_simulation_service(db: Session, simulation_id: str, update_data: Simu
     return simulation
 
 
-async def generate_and_save_pdf_service(db: Session, simulation_id: str) -> str:
+async def generate_and_save_pdf_service(db: Session, simulation_id: str, background_tasks: BackgroundTasks) -> bool:
     """
-    Service to fetch a simulation, generate a new PDF, update the record, and return the path.
+    Service to trigger a new PDF generation in the background.
     """
     simulation = db.query(Simulation).filter(Simulation.id == simulation_id).first()
     
     if not simulation:
-        return None
+        return False
 
-    pdf_path = await export_pdf(simulation.to_scenario())
-    
-    simulation.pdf_path = pdf_path
+    simulation.pdf_status = PdfStatus.GENERATING
     db.commit()
-    db.refresh(simulation)
+
+    background_tasks.add_task(run_pdf_generation_task, simulation_id)
     
-    return pdf_path
+    return True
+
+async def run_pdf_generation_task(simulation_id: str):
+    from database import SessionLocal
+    import traceback # Added import for traceback
+    db = SessionLocal()
+    
+    try:
+        simulation = db.query(Simulation).filter(Simulation.id == simulation_id).first()
+        if not simulation:
+            print(f"❌ Error: Simulation {simulation_id} not found for PDF generation task.")
+            return
+
+        print(f"Regenerating PDF for Simulation {simulation_id}...")
+        pdf_path = await export_pdf(simulation.to_scenario())
+        
+        simulation.pdf_path = pdf_path
+        simulation.pdf_status = PdfStatus.READY
+        simulation.updated_at = func.now()
+        
+        db.commit()
+        db.refresh(simulation)
+        print(f"✅ PDF regenerated and saved to: {pdf_path}")
+    except Exception:
+        db.rollback()
+        simulation = db.query(Simulation).filter(Simulation.id == simulation_id).first()
+        if simulation:
+            simulation.pdf_status = PdfStatus.ERROR
+            db.commit()
+        print(traceback.format_exc())
+    finally:
+        db.close()

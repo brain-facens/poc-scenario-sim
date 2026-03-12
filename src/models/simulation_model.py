@@ -19,6 +19,12 @@ class SimulationStatus(enum.Enum):
     INTERRUPTED = "interrupted"
     STALE = "stale"
 
+class PdfStatus(enum.Enum):
+    IDLE = "idle"
+    GENERATING = "generating"
+    READY = "ready"
+    ERROR = "error"
+
 class Simulation(Base):
     __tablename__ = "simulations"
 
@@ -48,6 +54,7 @@ class Simulation(Base):
     simulator_evolution_parameters = Column(Text)
     
     status = Column(Enum(SimulationStatus), default=SimulationStatus.DOING, nullable=False)
+    pdf_status = Column(Enum(PdfStatus), default=PdfStatus.IDLE, nullable=False)
     error = Column(String, nullable=True)
 
     created_at = Column(
