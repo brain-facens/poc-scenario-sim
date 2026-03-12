@@ -121,13 +121,16 @@ async def simulation_gen(usr_input: str) -> Scenario:
     with open("./scenarios/test.json", "w", encoding="utf-8") as file:
         file.write(scenario.model_dump_json(indent=4))
     print("Scenario generated, generating PDF...")
-    scenario.pdf_path = await generate_pdf(scenario)
+    scenario.pdf_path = await generate_and_save_pdf_service(scenario)
     print("Done!")
     return scenario
 
 
-async def generate_pdf(sim_data: Scenario) -> str:
-    return await export_pdf(sim_data)
+def get_simulation_by_id_service(db: Session, simulation_id: str):
+    """
+    Retrieves a single simulation by its ID.
+    """
+    return db.query(Simulation).filter(Simulation.id == simulation_id).first()
 
 
 def create_mock_simulation_service(db: Session, simulation_input_id: str):
@@ -350,3 +353,21 @@ def update_simulation_service(db: Session, simulation_id: str, update_data: Simu
     db.commit()
     db.refresh(simulation)
     return simulation
+
+
+async def generate_and_save_pdf_service(db: Session, simulation_id: str) -> str:
+    """
+    Service to fetch a simulation, generate a new PDF, update the record, and return the path.
+    """
+    simulation = db.query(Simulation).filter(Simulation.id == simulation_id).first()
+    
+    if not simulation:
+        return None
+
+    pdf_path = await export_pdf(simulation.to_scenario())
+    
+    simulation.pdf_path = pdf_path
+    db.commit()
+    db.refresh(simulation)
+    
+    return pdf_path

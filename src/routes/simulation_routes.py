@@ -1,8 +1,7 @@
 import io
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status, BackgroundTasks
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from starlette.responses import FileResponse
 
@@ -16,11 +15,11 @@ from schemas.simulation_input_schemas import (
 )
 from services.simulation_services import (
     create_simulation_input_service,
-    generate_pdf,
     get_all_simulation_ids_service,
     get_simulations_by_input_id_service,
-    create_mock_simulation_async_service,
+    generate_and_save_pdf_service,
     update_simulation_service,
+    get_simulation_by_id_service,
 )
 
 simulation_router = APIRouter(prefix="/simulations", tags=["simulations"])
@@ -40,6 +39,46 @@ async def create_simulation_input(
     return await create_simulation_input_service(db=db, input_data=simulation_input, background_tasks=background_tasks)
 
 
+
+@simulation_router.get("/{simulation_id}/pdf", response_class=FileResponse)
+async def get_simulation_pdf(simulation_id: str, db: Session = Depends(get_db)):
+    """
+    GENERATES a new PDF for a specific simulation and updates the record.
+    Use this endpoint to refresh the PDF content if the simulation data has changed.
+    """
+    pdf_path = await generate_and_save_pdf_service(db, simulation_id=simulation_id)
+    
+    if not pdf_path:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Simulation not found"
+        )
+
+    return FileResponse(
+        path=pdf_path,
+        filename=f"simulation_{simulation_id}.pdf",
+        media_type="application/pdf",
+    )
+
+
+@simulation_router.get("/pdf/{simulation_id}", response_class=FileResponse)
+async def fetch_simulation_pdf(simulation_id: str, db: Session = Depends(get_db)):
+    """
+    Returns the EXISTING PDF file for a specific simulation without regenerating it.
+    """
+    simulation = get_simulation_by_id_service(db, simulation_id=simulation_id)
+    if not simulation or not simulation.pdf_path:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="PDF not found for this simulation"
+        )
+
+    return FileResponse(
+        path=str(simulation.pdf_path),
+        filename=f"simulation_{simulation_id}.pdf",
+        media_type="application/pdf",
+    )
+
+
 @simulation_router.get("/{input_id}", response_model=List[SimulationFullRead])
 def get_simulations_by_input(input_id: str, db: Session = Depends(get_db)):
     """
@@ -48,25 +87,6 @@ def get_simulations_by_input(input_id: str, db: Session = Depends(get_db)):
     """
     return get_simulations_by_input_id_service(db, simulation_input_id=input_id)
 
-
-@simulation_router.get("/pdf/{input_id}", response_model=bytes)
-async def generate_simulation_pdf(input_id: str, db: Session = Depends(get_db)):
-    """
-    Generates a PDF file for the simulation associated with the provided input ID.
-    """
-    simulations = get_simulations_by_input_id_service(db, simulation_input_id=input_id)
-    if not simulations:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Simulation not found"
-        )
-
-    sim_data: Simulation = simulations[0]
-    # pdf_path: str = await generate_pdf(sim_data)
-    return FileResponse(
-        path=str(sim_data.pdf_path),
-        filename="simulation.pdf",
-        media_type="application/pdf",
-    )
 
 
 @simulation_router.get("/", response_model=List[SimulationFullRead])
