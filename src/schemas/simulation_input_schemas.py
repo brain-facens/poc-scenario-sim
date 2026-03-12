@@ -1,7 +1,6 @@
 from datetime import datetime
-
 from pydantic import BaseModel
-
+from typing import Optional
 
 class SimulationInputCreate(BaseModel):
     pitch: str
@@ -52,6 +51,7 @@ class SceneRead(BaseModel):
 class SimulationFullRead(BaseModel):
     id: str
     simulation_input_id: str
+    learning_objectives: str | None
     status: str
     error: str | None = None
     scene_organization: str | None
@@ -79,3 +79,12 @@ class SimulationFullRead(BaseModel):
 
     class Config:
         from_attributes: bool = True
+
+
+class SimulationUpdateSchema(BaseModel):
+    learning_objectives: Optional[str] = None
+    case_presentation: Optional[str] = None
+    scene_organization: Optional[str] = None
+    students_briefing: Optional[str] = None
+    debriefing: Optional[str] = None
+    appendix: Optional[str] = None
