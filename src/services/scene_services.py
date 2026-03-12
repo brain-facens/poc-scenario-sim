@@ -1,7 +1,14 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from models.scene_model import Scene
-from schemas.scene_schemas import SceneUpdate
+from schemas.scene_schemas import SceneUpdate, SceneCreate
+
+def create_scene_service(db: Session, scene_data: SceneCreate):
+    db_scene = Scene(**scene_data.model_dump())
+    db.add(db_scene)
+    db.commit()
+    db.refresh(db_scene)
+    return db_scene
 
 def get_scene_by_id_service(db: Session, scene_id: str):
     scene = db.query(Scene).filter(Scene.id == scene_id).first()
@@ -22,4 +29,10 @@ def update_scene_service(db: Session, scene_id: str, update_data: SceneUpdate):
     
     db.commit()
     db.refresh(db_scene)
+    return db_scene
+
+def delete_scene_service(db: Session, scene_id: str):
+    db_scene = get_scene_by_id_service(db, scene_id)
+    db.delete(db_scene)
+    db.commit()
     return db_scene

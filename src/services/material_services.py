@@ -1,7 +1,14 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from models.material_model import Material
-from schemas.material_schemas import MaterialUpdate
+from schemas.material_schemas import MaterialUpdate, MaterialCreate
+
+def create_material_service(db: Session, material_data: MaterialCreate):
+    db_material = Material(**material_data.model_dump())
+    db.add(db_material)
+    db.commit()
+    db.refresh(db_material)
+    return db_material
 
 def get_material_by_id_service(db: Session, material_id: str):
     material = db.query(Material).filter(Material.id == material_id).first()
@@ -22,4 +29,10 @@ def update_material_service(db: Session, material_id: str, update_data: Material
     
     db.commit()
     db.refresh(db_material)
+    return db_material
+
+def delete_material_service(db: Session, material_id: str):
+    db_material = get_material_by_id_service(db, material_id)
+    db.delete(db_material)
+    db.commit()
     return db_material

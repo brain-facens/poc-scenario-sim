@@ -1,10 +1,17 @@
 from fastapi import APIRouter, Depends, Path
 from sqlalchemy.orm import Session
 from database import get_db
-from schemas.material_schemas import MaterialRead, MaterialUpdate
-from services.material_services import update_material_service, get_material_by_id_service
+from schemas.material_schemas import MaterialRead, MaterialUpdate, MaterialCreate
+from services.material_services import update_material_service, get_material_by_id_service, create_material_service, delete_material_service
 
 material_router = APIRouter(prefix="/materials", tags=["materials"])
+
+@material_router.post("/", response_model=MaterialRead)
+def create_material(
+    material: MaterialCreate,
+    db: Session = Depends(get_db)
+):
+    return create_material_service(db=db, material_data=material)
 
 @material_router.get("/{material_id}", response_model=MaterialRead)
 def get_material(
@@ -20,3 +27,10 @@ def update_material(
     db: Session = Depends(get_db)
 ):
     return update_material_service(db=db, material_id=material_id, update_data=material_update)
+
+@material_router.delete("/{material_id}", response_model=MaterialRead)
+def delete_material(
+    material_id: str,
+    db: Session = Depends(get_db)
+):
+    return delete_material_service(db=db, material_id=material_id)

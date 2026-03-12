@@ -1,10 +1,17 @@
 from fastapi import APIRouter, Depends, Path
 from sqlalchemy.orm import Session
 from database import get_db
-from schemas.scene_schemas import SceneRead, SceneUpdate
-from services.scene_services import update_scene_service, get_scene_by_id_service
+from schemas.scene_schemas import SceneRead, SceneUpdate, SceneCreate
+from services.scene_services import update_scene_service, get_scene_by_id_service, create_scene_service, delete_scene_service
 
 scene_router = APIRouter(prefix="/scenes", tags=["scenes"])
+
+@scene_router.post("/", response_model=SceneRead)
+def create_scene(
+    scene: SceneCreate,
+    db: Session = Depends(get_db)
+):
+    return create_scene_service(db=db, scene_data=scene)
 
 @scene_router.get("/{scene_id}", response_model=SceneRead)
 def get_scene(
@@ -20,3 +27,10 @@ def update_scene(
     db: Session = Depends(get_db)
 ):
     return update_scene_service(db=db, scene_id=scene_id, update_data=scene_update)
+
+@scene_router.delete("/{scene_id}", response_model=SceneRead)
+def delete_scene(
+    scene_id: str,
+    db: Session = Depends(get_db)
+):
+    return delete_scene_service(db=db, scene_id=scene_id)

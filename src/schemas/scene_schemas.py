@@ -1,6 +1,13 @@
 from pydantic import BaseModel
 from typing import Optional
 
+class SceneCreate(BaseModel):
+    simulation_id: str
+    student_role: Optional[str] = None
+    actor_sim_role: Optional[str] = None
+    student_plan_b: Optional[str] = None
+    sequence_number: Optional[int] = None
+
 class SceneUpdate(BaseModel):
     student_role: Optional[str] = None
     actor_sim_role: Optional[str] = None
