@@ -11,6 +11,7 @@ class SceneCreate(BaseModel):
 class SceneUpdate(BaseModel):
     student_role: Optional[str] = None
     actor_sim_role: Optional[str] = None
+    sequence_number: Optional[int] = None
     student_plan_b: Optional[str] = None
 
 class SceneRead(BaseModel):
