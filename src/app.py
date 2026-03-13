@@ -11,6 +11,8 @@ from services.simulation_services import (
     cleanup_timed_out_simulations,
     process_stale_queue,
 )
+from routes import general_routes, users_routes, simulation_routes, actor_routes, scene_routes, material_routes
+from services.simulation_services import cleanup_timed_out_simulations, process_stale_queue
 
 
 @repeat_every(seconds=300)
@@ -50,6 +52,9 @@ app.add_middleware(
 app.include_router(general_routes.general_router)
 app.include_router(users_routes.users_router)
 app.include_router(simulation_routes.simulation_router)
+app.include_router(actor_routes.actor_router)
+app.include_router(scene_routes.scene_router)
+app.include_router(material_routes.material_router)
 
 if __name__ == "__main__":
     uvicorn.run("app:app", reload=True, timeout_keep_alive=120)

@@ -55,6 +55,7 @@ class SimulationFullRead(BaseModel):
     simulation_input_id: str
     learning_objectives: str | None
     status: str
+    pdf_status: str
     error: str | None = None
     scene_organization: str | None
     case_presentation: str | None
@@ -88,5 +89,11 @@ class SimulationUpdateSchema(BaseModel):
     case_presentation: Optional[str] = None
     scene_organization: Optional[str] = None
     students_briefing: Optional[str] = None
+    students_role: Optional[str] = None
+    actors_role: Optional[str] = None
+    simulator_role: Optional[str] = None
+    students_quantity: Optional[int] = None
+    actors_quantity: Optional[int] = None
+    uses_simulator: Optional[int] = None
     debriefing: Optional[str] = None
     appendix: Optional[str] = None

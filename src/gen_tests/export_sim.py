@@ -21,6 +21,7 @@ async def export_pdf(scenario: Scenario) -> str:
     date: str = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     import os
     path: str = f"./pdf_exports/simulação-{date}.pdf"
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    _ = HTML(string=sim_data).write_pdf(path)
-    return path
+    abs_path = os.path.abspath(path)
+    os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+    _ = HTML(string=sim_data).write_pdf(abs_path)
+    return abs_path
