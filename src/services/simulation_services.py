@@ -11,13 +11,11 @@ from gen_tests.gen_parts.scenario import Scenario
 from gen_tests.gen_sim import generate
 from models import Actor, Scene, Simulation, SimulationInput
 from models.material_model import Material
-from models.simulation_model import SimulationStatus
+from models.simulation_model import PdfStatus, SimulationStatus
 from schemas.simulation_input_schemas import (
     SimulationInputCreate,
     SimulationUpdateSchema,
 )
-from models.simulation_model import SimulationStatus, PdfStatus
-from schemas.simulation_input_schemas import SimulationInputCreate, SimulationUpdateSchema
 
 
 async def create_simulation_input_service(
@@ -68,6 +66,7 @@ async def run_simulation_generation_task(input_id: str, simulation_id: str, pitc
         scenario_data = await generate(pitch)
 
         new_simulation.scene_organization = scenario_data.scene_organization
+        new_simulation.learning_objectives = scenario_data.learning_objectives
         new_simulation.case_presentation = scenario_data.case_presentation
         new_simulation.students_briefing = scenario_data.students_briefing
         new_simulation.debriefing = scenario_data.debriefing
@@ -261,12 +260,14 @@ def update_simulation_service(
     return simulation
 
 
-async def generate_and_save_pdf_service(db: Session, simulation_id: str, background_tasks: BackgroundTasks) -> bool:
+async def generate_and_save_pdf_service(
+    db: Session, simulation_id: str, background_tasks: BackgroundTasks
+) -> bool:
     """
     Service to trigger a new PDF generation in the background.
     """
     simulation = db.query(Simulation).filter(Simulation.id == simulation_id).first()
-    
+
     if not simulation:
         return False
 
@@ -274,27 +275,32 @@ async def generate_and_save_pdf_service(db: Session, simulation_id: str, backgro
     db.commit()
 
     background_tasks.add_task(run_pdf_generation_task, simulation_id)
-    
+
     return True
 
+
 async def run_pdf_generation_task(simulation_id: str):
+    import traceback  # Added import for traceback
+
     from database import SessionLocal
-    import traceback # Added import for traceback
+
     db = SessionLocal()
-    
+
     try:
         simulation = db.query(Simulation).filter(Simulation.id == simulation_id).first()
         if not simulation:
-            print(f"❌ Error: Simulation {simulation_id} not found for PDF generation task.")
+            print(
+                f"❌ Error: Simulation {simulation_id} not found for PDF generation task."
+            )
             return
 
         print(f"Regenerating PDF for Simulation {simulation_id}...")
         pdf_path = await export_pdf(simulation.to_scenario())
-        
+
         simulation.pdf_path = pdf_path
         simulation.pdf_status = PdfStatus.READY
         simulation.updated_at = func.now()
-        
+
         db.commit()
         db.refresh(simulation)
         print(f"✅ PDF regenerated and saved to: {pdf_path}")

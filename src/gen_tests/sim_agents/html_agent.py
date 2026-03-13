@@ -1,4 +1,6 @@
-from agents import Agent, OpenAIChatCompletionsModel
+import os
+
+from agents import Agent, FileSearchTool, OpenAIChatCompletionsModel
 from openai import AsyncOpenAI
 
 from gen_tests.gen_parts.scenario import Scenario
@@ -15,5 +17,8 @@ model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
 html_agent: Agent = Agent[Scenario](
     name="Actor Briefing",
     instructions=html_prompt,
+    tools=[
+        FileSearchTool(vector_store_ids=[os.getenv("VECTOR_STORE")], max_num_results=1),
+    ],
     model="gpt-4o-mini",
 )
