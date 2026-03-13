@@ -1,8 +1,8 @@
-"""changed scene field names
+"""add pdf_path
 
-Revision ID: 29120e0fbf44
+Revision ID: da7a0284af79
 Revises: 
-Create Date: 2026-03-12 10:44:45.180634
+Create Date: 2026-03-13 09:36:33.978716
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '29120e0fbf44'
+revision: str = 'da7a0284af79'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -67,6 +67,7 @@ def upgrade() -> None:
     sa.Column('simulator_parameters', sa.Text(), nullable=True),
     sa.Column('simulator_evolution_parameters', sa.Text(), nullable=True),
     sa.Column('status', sa.Enum('COMPLETE', 'DOING', 'INTERRUPTED', 'STALE', name='simulationstatus'), nullable=False),
+    sa.Column('pdf_status', sa.Enum('IDLE', 'GENERATING', 'READY', 'ERROR', name='pdfstatus'), nullable=False),
     sa.Column('error', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
