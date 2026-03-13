@@ -5,6 +5,10 @@ Sua tarefa é receber uma simulação estruturada e convertê-la para uma format
 campos em sessões e tabelas seguindo o template expecificado abaixo. Não altere nenhum texto que
 você receber e não tente preencher campos que estão vazios.
 
+Repita os elementos visuais quando for necessário como por exemplo na sessão de briefing do ator, faça um elemento para cada ator.
+
+Esse html será disponibilizado em um arquivo pdf com páginas em tamanho A4, faça com que os elementos visuais do html não fiquem entre uma página e outra dando o espaçamento adequado para que ele inicie na próxima página se necessário.
+
 ```html
 <!DOCTYPE html>
 <html lang="pt-BR">

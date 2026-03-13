@@ -1,6 +1,8 @@
 from datetime import datetime
-from pydantic import BaseModel
 from typing import Optional
+
+from pydantic import BaseModel
+
 
 class SimulationInputCreate(BaseModel):
     pitch: str
@@ -39,8 +41,8 @@ class MaterialRead(BaseModel):
 
 class SceneRead(BaseModel):
     id: str
-    student_role: str | None
-    actor_sim_role: str | None
+    student_plan_a: str | None
+    actor_sim_directions: str | None
     student_plan_b: str | None
     sequence_number: int | None
 
@@ -73,7 +75,7 @@ class SimulationFullRead(BaseModel):
     actors: list[ActorRead] = []
     scenes: list[SceneRead] = []
     materials: list[MaterialRead] = []
-    
+
     created_at: datetime
     updated_at: datetime | None = None
 

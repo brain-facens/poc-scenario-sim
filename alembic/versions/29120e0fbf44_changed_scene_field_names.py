@@ -1,8 +1,8 @@
-"""initial_migration
+"""changed scene field names
 
-Revision ID: 1d203b9747cc
+Revision ID: 29120e0fbf44
 Revises: 
-Create Date: 2026-03-03 15:46:40.669750
+Create Date: 2026-03-12 10:44:45.180634
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '1d203b9747cc'
+revision: str = '29120e0fbf44'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -57,6 +57,7 @@ def upgrade() -> None:
     sa.Column('students_briefing', sa.Text(), nullable=True),
     sa.Column('debriefing', sa.Text(), nullable=True),
     sa.Column('appendix', sa.Text(), nullable=True),
+    sa.Column('pdf_path', sa.String(length=255), nullable=True),
     sa.Column('uses_simulator', sa.Integer(), nullable=True),
     sa.Column('students_quantity', sa.Integer(), nullable=True),
     sa.Column('actors_quantity', sa.Integer(), nullable=True),
@@ -65,6 +66,8 @@ def upgrade() -> None:
     sa.Column('simulator_role', sa.String(), nullable=True),
     sa.Column('simulator_parameters', sa.Text(), nullable=True),
     sa.Column('simulator_evolution_parameters', sa.Text(), nullable=True),
+    sa.Column('status', sa.Enum('COMPLETE', 'DOING', 'INTERRUPTED', 'STALE', name='simulationstatus'), nullable=False),
+    sa.Column('error', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['simulation_input_id'], ['simulation_inputs.id'], ),
@@ -104,8 +107,8 @@ def upgrade() -> None:
 
     op.create_table('scenes',
     sa.Column('id', sa.String(length=36), nullable=False),
-    sa.Column('student_role', sa.Text(), nullable=True),
-    sa.Column('actor_sim_role', sa.Text(), nullable=True),
+    sa.Column('student_plan_a', sa.Text(), nullable=True),
+    sa.Column('actor_sim_directions', sa.Text(), nullable=True),
     sa.Column('student_plan_b', sa.Text(), nullable=True),
     sa.Column('sequence_number', sa.Integer(), nullable=True),
     sa.Column('simulation_id', sa.String(length=36), nullable=False),

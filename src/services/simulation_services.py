@@ -1,9 +1,9 @@
 import asyncio
 import traceback
+from datetime import datetime, timedelta, timezone
 
 from fastapi import BackgroundTasks
 from sqlalchemy import func
-from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 
 from gen_tests.export_sim import export_pdf
@@ -12,7 +12,10 @@ from gen_tests.gen_sim import generate
 from models import Actor, Scene, Simulation, SimulationInput
 from models.material_model import Material
 from models.simulation_model import SimulationStatus
-from schemas.simulation_input_schemas import SimulationInputCreate, SimulationUpdateSchema
+from schemas.simulation_input_schemas import (
+    SimulationInputCreate,
+    SimulationUpdateSchema,
+)
 
 
 async def create_simulation_input_service(
@@ -27,21 +30,24 @@ async def create_simulation_input_service(
     db.commit()
     db.refresh(db_input)
 
-    active_exists = db.query(Simulation).filter(
-        Simulation.status == SimulationStatus.DOING
-    ).first() is not None
+    active_exists = (
+        db.query(Simulation).filter(Simulation.status == SimulationStatus.DOING).first()
+        is not None
+    )
 
     initial_status = SimulationStatus.STALE if active_exists else SimulationStatus.DOING
 
-    new_simulation = Simulation(
-        simulation_input_id=db_input.id,
-        status=initial_status
-    )
+    new_simulation = Simulation(simulation_input_id=db_input.id, status=initial_status)
     db.add(new_simulation)
     db.commit()
 
     if initial_status == SimulationStatus.DOING:
-        background_tasks.add_task(run_simulation_generation_task, db_input.id, new_simulation.id, input_data.pitch)
+        background_tasks.add_task(
+            run_simulation_generation_task,
+            db_input.id,
+            new_simulation.id,
+            input_data.pitch,
+        )
 
     db.refresh(db_input)
 
@@ -49,27 +55,38 @@ async def create_simulation_input_service(
 
 
 async def run_simulation_generation_task(input_id: str, simulation_id: str, pitch: str):
-    from database import SessionLocal 
+    from database import SessionLocal
+
     db = SessionLocal()
-    
+
     try:
-        new_simulation = db.query(Simulation).filter(Simulation.id == simulation_id).first()
+        new_simulation = (
+            db.query(Simulation).filter(Simulation.id == simulation_id).first()
+        )
         scenario_data = await generate(pitch)
-        
+
         new_simulation.scene_organization = scenario_data.scene_organization
         new_simulation.case_presentation = scenario_data.case_presentation
         new_simulation.students_briefing = scenario_data.students_briefing
         new_simulation.debriefing = scenario_data.debriefing
         new_simulation.appendix = scenario_data.appendix
-        new_simulation.uses_simulator = 1 if scenario_data.scene_participants.uses_simulator else 0
-        new_simulation.students_quantity = scenario_data.scene_participants.students_quantity
-        new_simulation.actors_quantity = scenario_data.scene_participants.actors_quantity
+        new_simulation.uses_simulator = (
+            1 if scenario_data.scene_participants.uses_simulator else 0
+        )
+        new_simulation.students_quantity = (
+            scenario_data.scene_participants.students_quantity
+        )
+        new_simulation.actors_quantity = (
+            scenario_data.scene_participants.actors_quantity
+        )
         new_simulation.students_role = scenario_data.scene_participants.students_role
         new_simulation.actors_role = scenario_data.scene_participants.actors_role
         new_simulation.simulator_role = scenario_data.scene_participants.simulator_role
         new_simulation.simulator_parameters = scenario_data.simulator_parameters
-        new_simulation.simulator_evolution_parameters = scenario_data.simulator_evolution_parameters
-        
+        new_simulation.simulator_evolution_parameters = (
+            scenario_data.simulator_evolution_parameters
+        )
+
         new_simulation.status = SimulationStatus.COMPLETE
 
         for actor_brief in scenario_data.actor_briefing:
@@ -104,6 +121,7 @@ async def run_simulation_generation_task(input_id: str, simulation_id: str, pitc
     finally:
         db.close()
 
+
 async def simulation_gen(usr_input: str) -> Scenario:
     """
     Generates a simulation based on input string
@@ -117,6 +135,7 @@ async def simulation_gen(usr_input: str) -> Scenario:
     print("Generating scenario...")
     scenario: Scenario = await generate(usr_input=usr_input)
     import os
+
     os.makedirs("./scenarios", exist_ok=True)
     with open("./scenarios/test.json", "w", encoding="utf-8") as file:
         file.write(scenario.model_dump_json(indent=4))
@@ -128,58 +147,6 @@ async def simulation_gen(usr_input: str) -> Scenario:
 
 async def generate_pdf(sim_data: Scenario) -> str:
     return await export_pdf(sim_data)
-
-
-def create_mock_simulation_service(db: Session, simulation_input_id: str):
-    """
-    Creates a full simulation based on the specific JSON structure provided.
-    """
-    new_simulation = Simulation(
-        simulation_input_id=simulation_input_id,
-        scene_organization="A simulação é dividida em três cenas principais...",  # New field
-        case_presentation="Idoso apresenta sintomas inespecíficos (fadiga, dores musculares...)",
-        students_briefing="Você é o médico responsável pelo atendimento domiciliar...",  # Plural
-        debriefing="Ao final, discutir como foi abordado o medo do paciente...",
-        appendix="- Materiais sugeridos: poltrona, manta, jaleco...",
-        uses_simulator=False,
-        students_quantity=1,
-        actors_quantity=1,
-        students_role="Médico responsável pelo atendimento domiciliar.",
-        actors_role="Idoso (paciente) com medo de agulhas.",
-        simulator_parameters="",
-        simulator_evolution_parameters="",
-    )
-
-    mock_actors = [
-        Actor(
-            personal_data="Nome: Joaquim dos Santos, 78 anos.",
-            current_story="Vem apresentando há 5 dias cansaço, inapetência...",  # Corrected key
-            previous_story="Já se recusou em UBS e hospital a realizar exames...",  # Corrected key
-            clothing="Pijama, chinelos, sentado em poltrona.",
-            behavior_profile="Inicia a consulta colaborativo, mas fica ansioso.",
-        )
-    ]
-    new_simulation.actors.extend(mock_actors)
-
-    mock_scenes = [
-        Scene(
-            student_role="Médico inicia consulta domiciliar, realiza anamnese...",
-            actor_sim_role="Paciente inicia colaborativo, mas demonstra inquietação.",
-            student_plan_b="Caso perceba ansiedade, pode suspender sugestão de coleta.",
-        ),
-        Scene(
-            student_role="Explora e valida sentimentos do paciente...",
-            actor_sim_role="Paciente relata experiências passadas traumáticas.",
-            student_plan_b="Sugerir métodos alternativos se o paciente insistir no medo.",
-        ),
-    ]
-    new_simulation.scenes.extend(mock_scenes)
-
-    db.add(new_simulation)
-    db.commit()
-    db.refresh(new_simulation)
-
-    return new_simulation
 
 
 def get_simulations_by_input_id_service(db: Session, simulation_input_id: str):
@@ -202,100 +169,21 @@ def get_all_simulation_ids_service(db: Session):
     return db.query(Simulation).distinct().all()
 
 
-async def create_mock_simulation_async_service(
-    db: Session,
-    input_data,
-    background_tasks: BackgroundTasks,
-    delay: int = 20
-):
-    db_input = SimulationInput(pitch=f"MOCK: {input_data.pitch}")
-    db.add(db_input)
-    db.commit()
-    db.refresh(db_input)
-
-    new_simulation = Simulation(
-        simulation_input_id=db_input.id,
-        status=SimulationStatus.DOING
-    )
-    db.add(new_simulation)
-    db.commit()
-
-    background_tasks.add_task(
-        run_mock_generation_task,
-        db_input.id,
-        new_simulation.id,
-        delay
-    )
-
-    return db_input
-
-
-async def run_mock_generation_task(input_id: str, simulation_id: str, delay: int):
-    from database import SessionLocal
-    db = SessionLocal()
-
-    BLUE = "\033[94m"
-    GREEN = "\033[92m"
-    ENDC = "\033[0m"
-
-    print(f"\n{BLUE}[{datetime.now().strftime('%H:%M:%S')}] Starting Mock Generation...{ENDC}")
-    print(f"{BLUE}Simulation ID: {simulation_id} | Planned Delay: {delay}s{ENDC}")
-
-    try:
-        for i in range(delay, 0, -1):
-            print(f"\r🕒 Generating... {i}s remaining ", end="", flush=True)
-            await asyncio.sleep(1)
-
-        print(f"\n{GREEN}[{datetime.now().strftime('%H:%M:%S')}] Delay finished. Writing to DB...{ENDC}")
-
-        sim = db.query(Simulation).filter(Simulation.id == simulation_id).first()
-
-        sim.scene_organization = "Mocked Sequence: Phase A -> Phase B"
-        sim.case_presentation = "This is a synthetic test case."
-        sim.students_briefing = "Act natural during the simulation."
-        sim.uses_simulator = 1
-        sim.students_quantity = 1
-        sim.actors_quantity = 1
-
-        db.add(Actor(
-            personal_data="Mock Bot v1",
-            current_story="Testing the queue system.",
-            behavior_profile="Predictable and robotic.",
-            simulation_id=simulation_id
-        ))
-
-        db.add(Scene(
-            student_role="Tester",
-            actor_sim_role="Obstacle",
-            sequence_number=1,
-            simulation_id=simulation_id
-        ))
-
-        sim.status = SimulationStatus.COMPLETE
-        db.commit()
-        print(f"{GREEN}✅ Mock Simulation {simulation_id} marked as COMPLETE.{ENDC}\n")
-
-    except Exception as e:
-        db.rollback()
-        print(f"\n❌ Error in mock generation: {str(e)}")
-        sim = db.query(Simulation).filter(Simulation.id == simulation_id).first()
-        if sim:
-            sim.status = SimulationStatus.INTERRUPTED
-            sim.error = str(e)
-            db.commit()
-    finally:
-        db.close()
-
-
 def cleanup_timed_out_simulations(db: Session, timeout_minutes: int = 3):
     now = datetime.now(timezone.utc)
     threshold = now - timedelta(minutes=timeout_minutes)
-    print(f"Watchdog: Checking for simulations stuck since before {threshold.isoformat()}")
+    print(
+        f"Watchdog: Checking for simulations stuck since before {threshold.isoformat()}"
+    )
 
-    timed_out_sims = db.query(Simulation).filter(
-        Simulation.status == SimulationStatus.DOING,
-        func.coalesce(Simulation.updated_at, Simulation.created_at) < threshold
-    ).all()
+    timed_out_sims = (
+        db.query(Simulation)
+        .filter(
+            Simulation.status == SimulationStatus.DOING,
+            func.coalesce(Simulation.updated_at, Simulation.created_at) < threshold,
+        )
+        .all()
+    )
 
     print(f"Watchdog: Found {len(timed_out_sims)} timed-out simulations.")
 
@@ -309,16 +197,19 @@ def cleanup_timed_out_simulations(db: Session, timeout_minutes: int = 3):
 
 async def process_stale_queue(db: Session):
     """Promotes the most recent STALE simulation to DOING if none are active."""
-    active_job = db.query(Simulation).filter(
-        Simulation.status == SimulationStatus.DOING
-    ).first()
+    active_job = (
+        db.query(Simulation).filter(Simulation.status == SimulationStatus.DOING).first()
+    )
 
     if active_job:
         return None
 
-    next_sim = db.query(Simulation).filter(
-        Simulation.status == SimulationStatus.STALE
-    ).order_by(Simulation.created_at.desc()).first()
+    next_sim = (
+        db.query(Simulation)
+        .filter(Simulation.status == SimulationStatus.STALE)
+        .order_by(Simulation.created_at.desc())
+        .first()
+    )
 
     print(f"Watchdog: Found next stale simulation: {next_sim.id if next_sim else None}")
 
@@ -326,27 +217,31 @@ async def process_stale_queue(db: Session):
         next_sim.status = SimulationStatus.DOING
         db.commit()
 
-        asyncio.create_task(run_simulation_generation_task(
-            next_sim.simulation_input_id,
-            next_sim.id,
-            next_sim.simulation_input.pitch
-        ))
+        asyncio.create_task(
+            run_simulation_generation_task(
+                next_sim.simulation_input_id,
+                next_sim.id,
+                next_sim.simulation_input.pitch,
+            )
+        )
         return next_sim.id
 
     return None
 
 
-def update_simulation_service(db: Session, simulation_id: str, update_data: SimulationUpdateSchema):
+def update_simulation_service(
+    db: Session, simulation_id: str, update_data: SimulationUpdateSchema
+):
     simulation = db.query(Simulation).filter(Simulation.id == simulation_id).first()
-    
+
     if not simulation:
         return None
 
     update_dict = update_data.model_dump(exclude_unset=True)
-    
+
     for key, value in update_dict.items():
         setattr(simulation, key, value)
-    
+
     db.commit()
     db.refresh(simulation)
     return simulation

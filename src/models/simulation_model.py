@@ -19,6 +19,7 @@ class SimulationStatus(enum.Enum):
     INTERRUPTED = "interrupted"
     STALE = "stale"
 
+
 class Simulation(Base):
     __tablename__ = "simulations"
 
@@ -46,8 +47,10 @@ class Simulation(Base):
 
     simulator_parameters = Column(Text)
     simulator_evolution_parameters = Column(Text)
-    
-    status = Column(Enum(SimulationStatus), default=SimulationStatus.DOING, nullable=False)
+
+    status = Column(
+        Enum(SimulationStatus), default=SimulationStatus.DOING, nullable=False
+    )
     error = Column(String, nullable=True)
 
     created_at = Column(
@@ -98,8 +101,8 @@ class Simulation(Base):
             students_briefing=str(self.students_briefing),
             scene_flow=[
                 GenScene(
-                    student_role=scene.student_role,
-                    actor_sim_role=scene.actor_sim_role,
+                    student_plan_a=scene.student_plan_a,
+                    actor_sim_directions=scene.actor_sim_directions,
                     student_plan_b=scene.student_plan_b,
                 )
                 for scene in self.scenes

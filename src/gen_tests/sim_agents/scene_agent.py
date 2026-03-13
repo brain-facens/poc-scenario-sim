@@ -9,12 +9,12 @@ local_client: AsyncOpenAI = AsyncOpenAI(
 )
 
 model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
-    model="qwen3:8b", openai_client=local_client
+    model="qwen3.5:9b", openai_client=local_client
 )
 
 scene_agent: Agent = Agent(
     name="Scene Writer",
     instructions=scene_prompt,
     output_type=Scene,
-    model=model,  # "gpt-4o-mini"
+    model="gpt-4o-mini",
 )

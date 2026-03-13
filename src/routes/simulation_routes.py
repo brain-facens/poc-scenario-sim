@@ -1,7 +1,7 @@
 import io
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from starlette.responses import FileResponse
@@ -19,7 +19,6 @@ from services.simulation_services import (
     generate_pdf,
     get_all_simulation_ids_service,
     get_simulations_by_input_id_service,
-    create_mock_simulation_async_service,
     update_simulation_service,
 )
 
@@ -30,14 +29,16 @@ simulation_router = APIRouter(prefix="/simulations", tags=["simulations"])
     "/", response_model=SimulationInputRead, status_code=status.HTTP_201_CREATED
 )
 async def create_simulation_input(
-    simulation_input: SimulationInputCreate, 
+    simulation_input: SimulationInputCreate,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Creates a new SimulationInput record in the database using the provided pitch.
     """
-    return await create_simulation_input_service(db=db, input_data=simulation_input, background_tasks=background_tasks)
+    return await create_simulation_input_service(
+        db=db, input_data=simulation_input, background_tasks=background_tasks
+    )
 
 
 @simulation_router.get("/{input_id}", response_model=List[SimulationFullRead])
@@ -76,11 +77,12 @@ def list_simulations(db: Session = Depends(get_db)):
     """
     return get_all_simulation_ids_service(db)
 
+
 @simulation_router.patch("/{simulation_id}", response_model=SimulationFullRead)
 def update_simulation(
     simulation_id: str,
     update_data: SimulationUpdateSchema,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Updates specific fields of an existing simulation.

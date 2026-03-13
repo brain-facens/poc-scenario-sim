@@ -9,12 +9,12 @@ local_client: AsyncOpenAI = AsyncOpenAI(
 )
 
 model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
-    model="qwen3:8b", openai_client=local_client
+    model="qwen3.5:9b", openai_client=local_client
 )
 
 actor_agent: Agent = Agent(
     name="Actor Briefing",
     instructions=actor_prompt,
     output_type=ActorBriefing,
-    model=model,  # "gpt-4o-mini"
+    model="gpt-4o-mini",
 )
