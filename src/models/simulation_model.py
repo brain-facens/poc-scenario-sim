@@ -105,9 +105,9 @@ class Simulation(Base):
             students_briefing=str(self.students_briefing or ""),
             scene_flow=[
                 GenScene(
-                    student_plan_a=scene.student_plan_a,
-                    actor_sim_directions=scene.actor_sim_directions,
-                    student_plan_b=scene.student_plan_b,
+                    student_plan_a=scene.student_plan_a or "",
+                    actor_sim_directions=scene.actor_sim_directions or "",
+                    student_plan_b=scene.student_plan_b or "",
                 )
                 for scene in self.scenes
             ],

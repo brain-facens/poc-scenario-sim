@@ -8,6 +8,10 @@ from gen_tests.sim_agents.html_agent import html_agent
 
 
 async def export_pdf(scenario: Scenario) -> str:
+    
+    for i, tool in enumerate(html_agent.tools):
+        print(f"Tool {i}: {tool}")
+        
     output: RunResult = await Runner.run(
         starting_agent=html_agent,
         input=scenario.model_dump_json(indent=4),
