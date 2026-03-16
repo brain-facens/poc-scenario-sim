@@ -1,8 +1,8 @@
-"""add pdf_path
+"""gen db
 
-Revision ID: da7a0284af79
+Revision ID: 197baf5f90c0
 Revises: 
-Create Date: 2026-03-13 09:36:33.978716
+Create Date: 2026-03-16 09:10:44.230452
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'da7a0284af79'
+revision: str = '197baf5f90c0'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
