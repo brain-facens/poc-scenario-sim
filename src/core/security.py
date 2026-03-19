@@ -9,7 +9,7 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models.users_model import User
+from modules.auth.models.user_model import User
 
 SECRET_KEY = os.getenv("SECRET_KEY", "your-super-secret-key")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")

@@ -6,13 +6,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_utilities import repeat_every
 
 from database import SessionLocal
-from routes import general_routes, simulation_routes, users_routes
-from services.simulation_services import (
+
+# --- Module routers ---
+from modules.auth.routes.user_routes import users_router
+from modules.general.routes.general_routes import general_router
+from modules.scenario_sim.routes.actor_routes import actor_router
+from modules.scenario_sim.routes.material_routes import material_router
+from modules.scenario_sim.routes.scene_routes import scene_router
+from modules.scenario_sim.routes.simulation_routes import simulation_router
+from modules.scenario_sim.services.simulation_services import (
     cleanup_timed_out_simulations,
     process_stale_queue,
 )
-from routes import general_routes, users_routes, simulation_routes, actor_routes, scene_routes, material_routes
-from services.simulation_services import cleanup_timed_out_simulations, process_stale_queue
 
 
 @repeat_every(seconds=300)
@@ -39,7 +44,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="sql alchemy", lifespan=lifespan)
+app = FastAPI(title="Brain Hub API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -49,12 +54,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(general_routes.general_router)
-app.include_router(users_routes.users_router)
-app.include_router(simulation_routes.simulation_router)
-app.include_router(actor_routes.actor_router)
-app.include_router(scene_routes.scene_router)
-app.include_router(material_routes.material_router)
+# General
+app.include_router(general_router)
+
+# Auth / Users
+app.include_router(users_router)
+
+# Scenario Simulation
+app.include_router(simulation_router)
+app.include_router(actor_router)
+app.include_router(scene_router)
+app.include_router(material_router)
 
 if __name__ == "__main__":
     uvicorn.run("app:app", reload=True, timeout_keep_alive=120)
