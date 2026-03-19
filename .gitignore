@@ -212,3 +212,4 @@ __marimo__/
 *.pdf
 src/scenarios/
 src/*.json
+src/src/

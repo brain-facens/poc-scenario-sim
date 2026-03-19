@@ -10,6 +10,7 @@ from database import SessionLocal
 # --- Module routers ---
 from modules.auth.routes.user_routes import users_router
 from modules.general.routes.general_routes import general_router
+from modules.gerador_atas.routes.ata_routes import atas_router
 from modules.scenario_sim.routes.actor_routes import actor_router
 from modules.scenario_sim.routes.material_routes import material_router
 from modules.scenario_sim.routes.scene_routes import scene_router
@@ -65,6 +66,9 @@ app.include_router(simulation_router)
 app.include_router(actor_router)
 app.include_router(scene_router)
 app.include_router(material_router)
+
+# Gerador de ATAs
+app.include_router(atas_router)
 
 if __name__ == "__main__":
     uvicorn.run("app:app", reload=True, timeout_keep_alive=120)
