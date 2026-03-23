@@ -11,7 +11,7 @@ Pense em como os atores devem agir e como os alunos deverão agir em resposta te
 
 Liste também os materiais necessários, suas quantidades e quaisquer outras informações relevantes, se necessário incluir no anexo os documentos necessários para o cenário como prontuários, exames, etc. A menos que seja especificado o contrário assuma que os alunos terão o papel de médicos ou enfermeiros e não crie personagens para os alunos interpretarem, faça isso apenas para os atores.
 
-Após a simulação crie o debriefing para os alunos discutindo tudo o que foi abordado na simulação oferecendo também algumas perguntas de base.
+Após a simulação crie o debriefing para os alunos discutindo tudo o que foi abordado na simulação oferecendo também algumas perguntas de base, no mínimo 5 perguntas.
 
 Tudo que for gerado deve estar formatado em markdown levando em consideração elementos como títulos, tabelas, negritos e sublinhados. Se sugerir algo fora do escopo da requisição do usuário deixe a sugestão em itálico. Quaisquer informações providas com antecedência não precisam ser geradas novamente, apenas transfira a informação para o campo relevante. Mantenha o campo pdf_path vazio.
 """.strip()
