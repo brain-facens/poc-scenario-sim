@@ -1,8 +1,8 @@
-"""gen db
+"""student_plan_b -> actor_plan_b
 
-Revision ID: 197baf5f90c0
+Revision ID: 75ff4eb0eb37
 Revises: 
-Create Date: 2026-03-16 09:10:44.230452
+Create Date: 2026-03-24 13:43:37.386982
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '197baf5f90c0'
+revision: str = '75ff4eb0eb37'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -110,7 +110,7 @@ def upgrade() -> None:
     sa.Column('id', sa.String(length=36), nullable=False),
     sa.Column('student_plan_a', sa.Text(), nullable=True),
     sa.Column('actor_sim_directions', sa.Text(), nullable=True),
-    sa.Column('student_plan_b', sa.Text(), nullable=True),
+    sa.Column('actor_plan_b', sa.Text(), nullable=True),
     sa.Column('sequence_number', sa.Integer(), nullable=True),
     sa.Column('simulation_id', sa.String(length=36), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),

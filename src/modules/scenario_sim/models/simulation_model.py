@@ -55,7 +55,9 @@ class Simulation(Base):
     simulator_parameters = Column(Text)
     simulator_evolution_parameters = Column(Text)
 
-    status = Column(Enum(SimulationStatus), default=SimulationStatus.DOING, nullable=False)
+    status = Column(
+        Enum(SimulationStatus), default=SimulationStatus.DOING, nullable=False
+    )
     pdf_status = Column(Enum(PdfStatus), default=PdfStatus.IDLE, nullable=False)
     error = Column(String, nullable=True)
 
@@ -79,7 +81,9 @@ class Simulation(Base):
         return Scenario(
             learning_objectives=str(self.learning_objectives or ""),
             necessary_resources=[
-                Resource(name=material.material_name or "", quantity=material.amount or 0)
+                Resource(
+                    name=material.material_name or "", quantity=material.amount or 0
+                )
                 for material in self.materials
             ],
             scene_organization=str(self.scene_organization or ""),
@@ -103,13 +107,15 @@ class Simulation(Base):
                 for actor in self.actors
             ],
             simulator_parameters=str(self.simulator_parameters or ""),
-            simulator_evolution_parameters=str(self.simulator_evolution_parameters or ""),
+            simulator_evolution_parameters=str(
+                self.simulator_evolution_parameters or ""
+            ),
             students_briefing=str(self.students_briefing or ""),
             scene_flow=[
                 GenScene(
                     student_plan_a=scene.student_plan_a or "",
                     actor_sim_directions=scene.actor_sim_directions or "",
-                    student_plan_b=scene.student_plan_b or "",
+                    actor_plan_b=scene.actor_plan_b or "",
                 )
                 for scene in self.scenes
             ],
