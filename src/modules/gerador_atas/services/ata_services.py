@@ -1,6 +1,8 @@
 import tempfile
 import os
 from datetime import datetime
+from sqlalchemy.orm import Session
+from modules.gerador_atas.models.ata_model import AtaModel, TranscricaoModel
 
 from modules.gerador_atas.gen_engine.ata_engine import estruturar_ata
 from modules.gerador_atas.gen_engine.ata_utils import (
@@ -13,6 +15,7 @@ from modules.gerador_atas.gen_engine.docx_builder import gerar_ata_docx
 
 
 async def gerar_ata_docx_service(
+    db: Session,
     transcricao: str,
     numero_ata: str,
     orgao: str,
@@ -24,6 +27,7 @@ async def gerar_ata_docx_service(
     condutor: str,
     secretario: str,
     info_adicional: str,
+    transcricao_id: str | None = None,
 ) -> tuple[bytes, str]:
     """
     Orchestrates the full ATA generation pipeline:
@@ -82,14 +86,39 @@ async def gerar_ata_docx_service(
         participantes=participantes_list,
     )
 
+    # --- Save to DB ---
+    ata_record = AtaModel(
+        numero_ata=numero_ata,
+        orgao=orgao,
+        sala=sala,
+        dia=dia,
+        mes=mes,
+        n_ano=n_ano,
+        hora_inicio=hora_inicio,
+        minutos_inicio=minutos_inicio,
+        hora_fim=hora_fim,
+        minutos_fim=minutos_fim,
+        participantes="; ".join(participantes_list),
+        ausentes="; ".join(ausentes_list),
+        condutor=condutor,
+        secretario=secretario,
+        tema=llm_data.get("tema", ""),
+        resumo=llm_data.get("resumo", ""),
+        assuntos_discutidos="; ".join(llm_data.get("assuntos_discutidos", [])),
+        deliberacoes="; ".join(llm_data.get("deliberacoes", [])),
+        transcricao_id=transcricao_id
+    )
+    db.add(ata_record)
+    db.commit()
+
     filename = f"ATA_{numero_ata.replace('/', '-')}.docx"
     return docx_bytes, filename
 
 
-async def transcrever_audio_service(audio_bytes: bytes, suffix: str = ".wav") -> tuple[str, float]:
+async def transcrever_audio_service(db: Session, audio_bytes: bytes, suffix: str = ".wav") -> tuple[str, float, str]:
     """
     Writes uploaded audio bytes to a temp file, runs WhisperX transcription,
-    and returns (transcription_text, elapsed_seconds).
+    saves the transaction to the DB, and returns (transcription_text, elapsed_seconds, transcricao_id).
 
     Note: WhisperX requires a CUDA-capable GPU. Import is intentionally lazy
     so the server can start even without a GPU (transcription endpoint will
@@ -106,4 +135,13 @@ async def transcrever_audio_service(audio_bytes: bytes, suffix: str = ".wav") ->
     finally:
         os.remove(tmp_path)
 
-    return transcricao, elapsed
+    # --- Save to DB ---
+    trans_record = TranscricaoModel(
+        transcricao=transcricao,
+        elapsed_seconds=elapsed
+    )
+    db.add(trans_record)
+    db.commit()
+    db.refresh(trans_record)
+
+    return transcricao, elapsed, trans_record.id
