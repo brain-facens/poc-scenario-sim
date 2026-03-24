@@ -43,7 +43,7 @@ class SceneRead(BaseModel):
     id: str
     student_plan_a: str | None
     actor_sim_directions: str | None
-    student_plan_b: str | None
+    actor_plan_b: str | None
     sequence_number: int | None
 
     class Config:

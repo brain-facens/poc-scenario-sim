@@ -1,7 +1,9 @@
 import uuid
+
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
 from database import Base
 
 
@@ -14,7 +16,7 @@ class Scene(Base):
 
     student_plan_a = Column(Text)
     actor_sim_directions = Column(Text)
-    student_plan_b = Column(Text)
+    actor_plan_b = Column(Text)
 
     sequence_number = Column(Integer)
 
