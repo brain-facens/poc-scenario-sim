@@ -4,7 +4,9 @@ from openai import AsyncOpenAI
 from modules.scenario_sim.gen_engine.gen_parts.scenario import Scenario
 from modules.scenario_sim.gen_engine.prompts.main_prompt import main_prompt
 from modules.scenario_sim.gen_engine.sim_agents.actor_agent import actor_agent
-from modules.scenario_sim.gen_engine.sim_agents.participants_agent import participants_agent
+from modules.scenario_sim.gen_engine.sim_agents.participants_agent import (
+    participants_agent,
+)
 from modules.scenario_sim.gen_engine.sim_agents.scene_agent import scene_agent
 
 local_client: AsyncOpenAI = AsyncOpenAI(
@@ -33,5 +35,5 @@ simulation_agent: Agent = Agent(
             tool_description="Writes scenes based on case and previously generated scenes",
         ),
     ],
-    model="gpt-4o-mini",
+    model="gpt-5-mini",
 )
