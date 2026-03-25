@@ -30,3 +30,6 @@ torch
 numpy
 openai-whisper
 whisperx
+
+# HTTP Clients
+requests
