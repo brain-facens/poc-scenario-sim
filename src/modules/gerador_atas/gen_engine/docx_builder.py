@@ -232,6 +232,7 @@ def build_document_xml(
     for i, d in enumerate(deliberacoes, 1):
         d_limpo = re.sub(r'^\d+\.\s*', '', d.strip())
         pars.append(p_deliberacao(f"{i}. {d_limpo}"))
+        pars.append(p(""))
     pars.append(p(""))
 
     # Encerramento
