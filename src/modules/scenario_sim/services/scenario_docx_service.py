@@ -1,15 +1,18 @@
 import io
 import os
-import re
 import zipfile
 from pathlib import Path
 from xml.sax.saxutils import escape
 
+from ..gen_engine.gen_parts.scenario import Scenario
+
 # Template is stored in poc-scenario-sim/assets/ alongside the other project assets.
 # Resolve relative to this file's location so the module is portable.
-_MODULE_DIR = Path(__file__).parent.parent  # modules/gerador_atas/
+_MODULE_DIR = Path(__file__).parent.parent  # modules/scenario_sim/
 TEMPLATE_PATH = str(
-    Path(__file__).parent.parent.parent.parent.parent / "assets" / "ATA_teste.docx"
+    Path(__file__).parent.parent.parent.parent.parent
+    / "assets"
+    / "Template Cenário_Facens.docx"
 )
 
 NS = (
@@ -194,88 +197,167 @@ def p_assinatura_tabela(participantes):
     )
 
 
-def build_document_xml(
-    numero_ata,
-    orgao,
-    tema,
-    introducao,
-    topicos,
-    deliberacoes,
-    condutor="",
-    secretario="",
-    hora_fim="",
-    minutos_fim="",
-    participantes=None,
-):
+def build_scenario_document_xml(scenario: Scenario):
+    """Build XML for DOCX document based on scenario object."""
     pars = []
 
     # Títulos
-    pars.append(p(f"ATA {numero_ata}", bold=True, center=True, size=28))
-    pars.append(p(orgao.upper(), bold=True, center=True, size=24))
-    pars.append(p(f"TEMA DA REUNIÃO: {tema.upper()}", bold=True, center=True, size=24))
+    pars.append(
+        p(
+            f" cenário: {scenario.learning_objectives[:50]}.",
+            bold=True,
+            center=True,
+            size=28,
+        )
+    )
+    pars.append(
+        p("UniFacens - Centro Universitário Facens", bold=True, center=True, size=24)
+    )
+    pars.append(p("Cenário de Simulação", bold=True, center=True, size=24))
     pars.append(p(""))
 
-    # Introdução
-    for linha in introducao.split("\n"):
+    # Case Presentation
+    pars.append(p("1. Apresentação do Caso", bold=True, center=False, size=24))
+    pars.append(p(""))
+    for linha in scenario.case_presentation.split("\n"):
         linha = linha.strip()
         if not linha:
-            pars.append(p(""))
             pars.append(p(""))
         elif linha.startswith("- "):
             pars.append(p_bullet(linha[2:].strip()))
         else:
-            pars.append(p(""))
             pars.append(p(linha, justify=True))
+    pars.append(p(""))
 
-    # Tópicos
+    # Scene Organization
+    pars.append(p("2. Organização da Cena", bold=True, center=False, size=24))
     pars.append(p(""))
-    pars.append(
-        p(
-            "Durante a reunião, foram discutidos os seguintes assuntos:",
-            bold=True,
-            justify=True,
-        )
-    )
-    pars.append(p(""))
-    for t in topicos:
-        t = t.strip()
-        if re.match(r"^[IVX]+\.", t):
-            pars.append(p_subtitulo_topico(t))
-        elif re.match(r"^[a-z]\)", t):
-            pars.append(p_item_topico(t))
+    for linha in scenario.scene_organization.split("\n"):
+        linha = linha.strip()
+        if not linha:
             pars.append(p(""))
+        elif linha.startswith("- "):
+            pars.append(p_bullet(linha[2:].strip()))
         else:
-            pars.append(p(t, justify=True))
+            pars.append(p(linha, justify=True))
     pars.append(p(""))
 
-    # Deliberações
-    pars.append(
-        p(
-            "Ficaram deliberadas as seguintes ações e encaminhamentos:",
-            bold=True,
-            justify=True,
-        )
-    )
+    # Scene Flow
+    pars.append(p("3. Desenvolvimento da Cena", bold=True, center=False, size=24))
     pars.append(p(""))
-    for i, d in enumerate(deliberacoes, 1):
-        d_limpo = re.sub(r"^\d+\.\s*", "", d.strip())
-        pars.append(p_deliberacao(f"{i}. {d_limpo}"))
-    pars.append(p(""))
-
-    # Encerramento
-    encerramento = (
-        f"{condutor} declarou encerrada a reunião, às {hora_fim} horas e {minutos_fim} minutos. "
-        f"Nada mais a tratar, eu, {secretario}, lavrei a presente ata que segue assinada pelos participantes."
-    )
-    pars.append(p(encerramento, justify=True))
-    pars.append(p(""))
-    pars.append(p(""))
-
-    # Assinaturas
-    if participantes:
-        pars.append(p("Assinaturas:", bold=True, justify=False))
+    for i, scene in enumerate(scenario.scene_flow, 1):
+        pars.append(p(f"{i}. {scene.student_plan_a}", bold=True, center=False, size=24))
         pars.append(p(""))
-        pars.append(p_assinatura_tabela(participantes))
+        for linha in scene.actor_sim_directions.split("\n"):
+            linha = linha.strip()
+            if not linha:
+                pars.append(p(""))
+            elif linha.startswith("- "):
+                pars.append(p_bullet(linha[2:].strip()))
+            else:
+                pars.append(p(linha, justify=True))
+        pars.append(p(""))
+        if scene.actor_plan_b:
+            pars.append(p("Plano do Ator B:", bold=True, center=False, size=24))
+            for linha in scene.actor_plan_b.split("\n"):
+                linha = linha.strip()
+                if not linha:
+                    pars.append(p(""))
+                elif linha.startswith("- "):
+                    pars.append(p_bullet(linha[2:].strip()))
+                else:
+                    pars.append(p(linha, justify=True))
+            pars.append(p(""))
+
+    # Actor Briefing
+    pars.append(p("4. Briefing dos Participantes", bold=True, center=False, size=24))
+    pars.append(p(""))
+    for i, actor in enumerate(scenario.actor_briefing, 1):
+        pars.append(p(f"{i}. {actor.personal_data}", bold=True, center=False, size=24))
+        pars.append(p(""))
+        for linha in actor.current_story.split("\n"):
+            linha = linha.strip()
+            if not linha:
+                pars.append(p(""))
+            elif linha.startswith("- "):
+                pars.append(p_bullet(linha[2:].strip()))
+            else:
+                pars.append(p(linha, justify=True))
+        pars.append(p(""))
+
+    # Simulator Parameters
+    pars.append(p("5. Parâmetros do Simulador", bold=True, center=False, size=24))
+    pars.append(p(""))
+    for linha in scenario.simulator_parameters.split("\n"):
+        linha = linha.strip()
+        if not linha:
+            pars.append(p(""))
+        elif linha.startswith("- "):
+            pars.append(p_bullet(linha[2:].strip()))
+        else:
+            pars.append(p(linha, justify=True))
+    pars.append(p(""))
+
+    # Simulator Evolution Parameters
+    pars.append(
+        p("6. Parâmetros de Evolução do Simulador", bold=True, center=False, size=24)
+    )
+    pars.append(p(""))
+    for linha in scenario.simulator_evolution_parameters.split("\n"):
+        linha = linha.strip()
+        if not linha:
+            pars.append(p(""))
+        elif linha.startswith("- "):
+            pars.append(p_bullet(linha[2:].strip()))
+        else:
+            pars.append(p(linha, justify=True))
+    pars.append(p(""))
+
+    # Students Briefing
+    pars.append(p("7. Briefing dos Estudantes", bold=True, center=False, size=24))
+    pars.append(p(""))
+    for linha in scenario.students_briefing.split("\n"):
+        linha = linha.strip()
+        if not linha:
+            pars.append(p(""))
+        elif linha.startswith("- "):
+            pars.append(p_bullet(linha[2:].strip()))
+        else:
+            pars.append(p(linha, justify=True))
+    pars.append(p(""))
+
+    # Debriefing
+    pars.append(p("8. Debriefing", bold=True, center=False, size=24))
+    pars.append(p(""))
+    for linha in scenario.debriefing.split("\n"):
+        linha = linha.strip()
+        if not linha:
+            pars.append(p(""))
+        elif linha.startswith("- "):
+            pars.append(p_bullet(linha[2:].strip()))
+        else:
+            pars.append(p(linha, justify=True))
+    pars.append(p(""))
+
+    # Appendix
+    pars.append(p("9. Anexo", bold=True, center=False, size=24))
+    pars.append(p(""))
+    for linha in scenario.appendix.split("\n"):
+        linha = linha.strip()
+        if not linha:
+            pars.append(p(""))
+        elif linha.startswith("- "):
+            pars.append(p_bullet(linha[2:].strip()))
+        else:
+            pars.append(p(linha, justify=True))
+    pars.append(p(""))
+
+    # Necessary Resources
+    pars.append(p("10. Recursos Necessários", bold=True, center=False, size=24))
+    pars.append(p(""))
+    for resource in scenario.necessary_resources:
+        pars.append(p(f"- {resource.name}: {resource.quantity}", justify=True))
+    pars.append(p(""))
 
     corpo = "\n".join(pars)
     return f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -292,37 +374,13 @@ def build_document_xml(
 </w:document>"""
 
 
-def gerar_ata_docx(
-    numero_ata,
-    orgao,
-    tema,
-    introducao,
-    topicos,
-    deliberacoes,
-    condutor="",
-    secretario="",
-    hora_fim="",
-    minutos_fim="",
-    participantes=None,
-) -> bytes:
+def generate_scenario_docx(scenario: Scenario) -> bytes:
     """
-    Generates an ATA .docx file in memory and returns the raw bytes.
+    Generates a scenario .docx file in memory and returns the raw bytes.
 
-    Uses the ATA_teste.docx template stored in assets/.
+    Uses the Template Cenário_Facens.docx template stored in assets/.
     """
-    novo_xml = build_document_xml(
-        numero_ata,
-        orgao,
-        tema,
-        introducao,
-        topicos,
-        deliberacoes,
-        condutor=condutor,
-        secretario=secretario,
-        hora_fim=hora_fim,
-        minutos_fim=minutos_fim,
-        participantes=participantes,
-    )
+    novo_xml = build_scenario_document_xml(scenario)
 
     buffer = io.BytesIO()
     with zipfile.ZipFile(TEMPLATE_PATH, "r") as tmpl:
@@ -334,3 +392,30 @@ def gerar_ata_docx(
                     novo.writestr(item, tmpl.read(item))
 
     return buffer.getvalue()
+
+
+def save_scenario_docx(scenario: Scenario, output_path: str | None = None) -> str:
+    """
+    Save scenario as a DOCX file.
+
+    Args:
+        scenario: Scenario object to convert to DOCX
+        output_path: Optional output path. If None, uses scenario.pdf_path
+
+    Returns:
+        Path to the saved DOCX file
+    """
+    if output_path is None:
+        output_path = scenario.pdf_path
+
+    # Ensure directory exists
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    # Generate DOCX bytes
+    docx_bytes = generate_scenario_docx(scenario)
+
+    # Write to file
+    with open(output_path, "wb") as f:
+        f.write(docx_bytes)
+
+    return output_path

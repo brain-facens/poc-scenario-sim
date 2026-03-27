@@ -17,8 +17,5 @@ model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
 html_agent: Agent = Agent[Scenario](
     name="Actor Briefing",
     instructions=html_prompt,
-    tools=[
-        # FileSearchTool(vector_store_ids=[os.getenv("VECTOR_STORE")], max_num_results=1),
-    ],
-    model="gpt-5-mini",
+    model=model,  # "gpt-5-mini"
 )

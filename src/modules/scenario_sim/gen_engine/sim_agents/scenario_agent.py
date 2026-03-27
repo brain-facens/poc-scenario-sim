@@ -35,5 +35,5 @@ simulation_agent: Agent = Agent(
             tool_description="Writes scenes based on case and previously generated scenes",
         ),
     ],
-    model="gpt-5-mini",
+    model=model,
 )

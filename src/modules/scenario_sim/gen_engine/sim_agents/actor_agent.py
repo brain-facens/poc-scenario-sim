@@ -16,5 +16,5 @@ actor_agent: Agent = Agent(
     name="Actor Briefing",
     instructions=actor_prompt,
     output_type=ActorBriefing,
-    model="gpt-5-mini",
+    model=model,
 )

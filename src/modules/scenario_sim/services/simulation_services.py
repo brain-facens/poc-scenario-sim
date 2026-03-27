@@ -6,12 +6,21 @@ from fastapi import BackgroundTasks
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from modules.scenario_sim.gen_engine.export_sim import export_pdf
+from modules.scenario_sim.gen_engine.export_sim import export_docx, export_pdf
 from modules.scenario_sim.gen_engine.gen_parts.scenario import Scenario
 from modules.scenario_sim.gen_engine.gen_sim import generate
-from modules.scenario_sim.models import Actor, Material, Scene, Simulation, SimulationInput
+from modules.scenario_sim.models import (
+    Actor,
+    Material,
+    Scene,
+    Simulation,
+    SimulationInput,
+)
 from modules.scenario_sim.models.simulation_model import PdfStatus, SimulationStatus
-from modules.scenario_sim.schemas.simulation_schemas import SimulationInputCreate, SimulationUpdateSchema
+from modules.scenario_sim.schemas.simulation_schemas import (
+    SimulationInputCreate,
+    SimulationUpdateSchema,
+)
 
 
 async def create_simulation_input_service(
@@ -109,7 +118,7 @@ async def run_simulation_generation_task(input_id: str, simulation_id: str, pitc
         new_simulation.pdf_status = PdfStatus.GENERATING
         db.commit()
 
-        pdf_result_path = await export_pdf(scenario_data)
+        pdf_result_path = await export_docx(scenario_data)
         new_simulation.pdf_path = pdf_result_path
         new_simulation.pdf_status = PdfStatus.READY
         new_simulation.updated_at = func.now()
@@ -285,7 +294,7 @@ async def run_pdf_generation_task(simulation_id: str):
             return
 
         print(f"Regenerating PDF for Simulation {simulation_id}...")
-        pdf_path = await export_pdf(simulation.to_scenario())
+        pdf_path = await export_docx(simulation.to_scenario())
 
         simulation.pdf_path = pdf_path
         simulation.pdf_status = PdfStatus.READY
