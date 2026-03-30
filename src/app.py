@@ -22,7 +22,7 @@ from modules.scenario_sim.services.simulation_services import (
 from modules.voice_changer.routes.voice_changer_routes import voice_changer_router
 
 
-@repeat_every(seconds=300)
+@repeat_every(seconds=1500)
 async def simulation_watchdog():
     print("DEBUG: Watchdog cycle started...")
     """Periodically checks for timeouts and processes the queue."""

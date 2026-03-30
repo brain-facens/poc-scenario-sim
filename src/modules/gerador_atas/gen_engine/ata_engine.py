@@ -1,11 +1,22 @@
+"""
+gen_engine.py – Pipeline de geração de ATAs com suporte a fallback local.
+
+BackendMode.OPENAI  → usa OpenAI sempre
+BackendMode.LOCAL   → usa Ollama local sempre
+BackendMode.AUTO    → tenta OpenAI; em caso de cota esgotada (insufficient_quota)
+                      ou erro de autenticação, recai automaticamente para local
+"""
+
 import asyncio
 import json
 import logging
 import os
 import time
+from dataclasses import dataclass
+from enum import Enum
 
 from dotenv import find_dotenv, load_dotenv
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, AuthenticationError, RateLimitError
 
 from modules.gerador_atas.gen_engine.prompts.ata_prompts import (
     PROMPT_CORRETOR,
@@ -15,77 +26,217 @@ from modules.gerador_atas.gen_engine.prompts.ata_prompts import (
     PROMPT_VALIDADOR,
 )
 
+# ---------------------------------------------------------------------------
+# Configuração
+# ---------------------------------------------------------------------------
+
 _ = load_dotenv(dotenv_path=find_dotenv())
-
-client = AsyncOpenAI(api_key=os.getenv("OPENAI_KEY"))
-MODEL_LARGE = "gpt-4.1-mini"
-MODEL_TINY = "gpt-5-mini"
-
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-async def corrigir_transcricao(transcricao: str, dados_manuais: str) -> str:
-    prompt_formatado = PROMPT_CORRETOR.format(
+class BackendMode(str, Enum):
+    """Estratégia de execução dos agentes LLM."""
+    OPENAI = "openai"   # Força OpenAI
+    LOCAL  = "local"    # Força Ollama local
+    AUTO   = "auto"     # OpenAI com fallback automático para local
+
+
+@dataclass(frozen=True)
+class BackendConfig:
+    """Configuração de cliente + modelos para um backend específico."""
+    client:      AsyncOpenAI
+    model_large: str   # agentes de texto livre (corretor, intro, validador)
+    model_small: str   # agentes de raciocínio (tópicos, deliberações)
+    name:        str   # label para logs
+
+
+def _build_backends() -> tuple[BackendConfig, BackendConfig]:
+    """Constrói as configurações de OpenAI e local."""
+
+    openai_config = BackendConfig(
+        client=AsyncOpenAI(api_key=os.getenv("OPENAI_KEY")),
+        model_large="gpt-4.1-mini",
+        model_small="gpt-5-mini",   # ← ajuste para o4-mini / gpt-4o-mini se quiser
+        name="OpenAI",
+    )
+
+    local_config = BackendConfig(
+        client=AsyncOpenAI(
+        base_url="http://172.16.51.162:11434/v1/",
+        api_key="ollama",  # pode ser qualquer valor; o Ollama ignora
+    ),
+        model_large="qwen3.5:latest",
+        model_small="qwen3.5:4b",
+        name="Local (Ollama)",
+    )
+
+    return openai_config, local_config
+
+
+BACKEND_OPENAI, BACKEND_LOCAL = _build_backends()
+
+# Erros que indicam que a cota/credencial OpenAI está indisponível
+_QUOTA_ERRORS = (
+    "insufficient_quota",
+    "quota_exceeded",
+    "billing_hard_limit_reached",
+)
+
+
+# ---------------------------------------------------------------------------
+# Helper de chamada com fallback
+# ---------------------------------------------------------------------------
+
+async def _completion(
+    *,
+    cfg: BackendConfig,
+    fallback: BackendConfig | None,
+    messages: list[dict],
+    reasoning: bool = False,
+) -> str:
+    """
+    Executa uma chamada chat.completions usando `cfg`.
+    Se `fallback` for fornecido e a chamada falhar por cota/auth, retenta
+    com `fallback` automaticamente.
+
+    Args:
+        cfg:       configuração principal (cliente + modelo)
+        fallback:  configuração de reserva ou None
+        messages:  lista de mensagens no formato OpenAI
+        reasoning: se True usa o model_small com reasoning_effort='high',
+                   caso contrário usa model_large sem reasoning
+    Returns:
+        Conteúdo textual da resposta (str)
+    """
+    model   = cfg.model_small if reasoning else cfg.model_large
+    kwargs: dict = dict(model=model, messages=messages)
+    if reasoning:
+        kwargs["reasoning_effort"] = "high"
+
+    try:
+        logger.debug("[%s] Chamando modelo '%s'…", cfg.name, model)
+        resp = await cfg.client.chat.completions.create(**kwargs)
+        return resp.choices[0].message.content.strip()
+
+    except (RateLimitError, AuthenticationError) as exc:
+        # Verifica se é realmente falta de cota/crédito
+        is_quota = any(code in str(exc).lower() for code in _QUOTA_ERRORS)
+        is_auth  = isinstance(exc, AuthenticationError)
+
+        if (is_quota or is_auth) and fallback is not None:
+            logger.warning(
+                "[%s] Falha (%s). Redirecionando para backend '%s'…",
+                cfg.name, type(exc).__name__, fallback.name,
+            )
+            return await _completion(
+                cfg=fallback,
+                fallback=None,      # sem fallback recursivo
+                messages=messages,
+                reasoning=reasoning,
+            )
+
+        logger.error("[%s] Sem fallback disponível. Erro: %s", cfg.name, exc)
+        raise
+
+
+def _resolve_backends(mode: BackendMode) -> tuple[BackendConfig, BackendConfig | None]:
+    """Retorna (cfg_principal, cfg_fallback) conforme o modo."""
+    if mode == BackendMode.OPENAI:
+        return BACKEND_OPENAI, None
+    if mode == BackendMode.LOCAL:
+        return BACKEND_LOCAL, None
+    # AUTO → OpenAI com fallback para local
+    return BACKEND_OPENAI, BACKEND_LOCAL
+
+
+# ---------------------------------------------------------------------------
+# Agentes
+# ---------------------------------------------------------------------------
+
+async def corrigir_transcricao(
+    transcricao: str,
+    dados_manuais: str,
+    cfg: BackendConfig,
+    fallback: BackendConfig | None,
+) -> str:
+    """Corrige erros de transcrição e normaliza o texto."""
+    logger.info("[Corretor] Enviando (%d chars)…", len(transcricao))
+    prompt = PROMPT_CORRETOR.format(
         transcricao=transcricao,
         dados_manuais=dados_manuais,
     )
-    logger.info("Enviando transcrição para correção (%d chars)...", len(transcricao))
-    response = await client.chat.completions.create(
-        model=MODEL_LARGE,
-        messages=[{"role": "user", "content": prompt_formatado}],
+    result = await _completion(
+        cfg=cfg, fallback=fallback,
+        messages=[{"role": "user", "content": prompt}],
+        reasoning=False,
     )
-    transcricao_corrigida = response.choices[0].message.content.strip()
-    logger.info("Correção concluída (%d chars).", len(transcricao_corrigida))
-    return transcricao_corrigida
+    logger.info("[Corretor] Concluído (%d chars).", len(result))
+    return result
 
 
-async def gerar_introducao(transcricao: str, dados_manuais: str) -> str:
-    prompt_formatado = PROMPT_INTRODUCAO.format(
+async def gerar_introducao(
+    transcricao: str,
+    dados_manuais: str,
+    cfg: BackendConfig,
+    fallback: BackendConfig | None,
+) -> str:
+    """Gera o parágrafo de introdução e extrai o tema da reunião."""
+    logger.info("[Introdução] Gerando…")
+    prompt = PROMPT_INTRODUCAO.format(
         transcricao=transcricao,
         dados_manuais=dados_manuais,
     )
-    logger.info("Gerando introdução da ATA (%d chars)...", len(transcricao))
-    response = await client.chat.completions.create(
-        model=MODEL_LARGE,
-        messages=[{"role": "user", "content": prompt_formatado}],
+    result = await _completion(
+        cfg=cfg, fallback=fallback,
+        messages=[{"role": "user", "content": prompt}],
+        reasoning=False,
     )
-    introducao = response.choices[0].message.content.strip()
-    logger.info("Introdução gerada (%d chars).", len(introducao))
-    return introducao
+    logger.info("[Introdução] Concluída (%d chars).", len(result))
+    return result
 
 
-async def gerar_topicos(transcricao: str, dados_manuais: str) -> str:
-    prompt_formatado = PROMPT_TOPICOS.format(
+async def gerar_topicos(
+    transcricao: str,
+    dados_manuais: str,
+    cfg: BackendConfig,
+    fallback: BackendConfig | None,
+) -> str:
+    """Extrai os tópicos discutidos na reunião (raciocínio ativo)."""
+    logger.info("[Tópicos] Gerando…")
+    prompt = PROMPT_TOPICOS.format(
         transcricao=transcricao,
         dados_manuais=dados_manuais,
     )
-    logger.info("Gerando tópicos da ATA (%d chars)...", len(transcricao))
-    response = await client.chat.completions.create(
-        model=MODEL_TINY,
-        reasoning_effort="high",
-        messages=[{"role": "user", "content": prompt_formatado}],
+    result = await _completion(
+        cfg=cfg, fallback=fallback,
+        messages=[{"role": "user", "content": prompt}],
+        reasoning=True,
     )
-    topicos = response.choices[0].message.content.strip()
-    logger.info("Tópicos gerados (%d chars).", len(topicos))
-    return topicos
+    logger.info("[Tópicos] Concluídos (%d chars).", len(result))
+    return result
 
 
-async def gerar_deliberacoes(transcricao: str, dados_manuais: str) -> str:
-    prompt_formatado = PROMPT_DELIBERACOES.format(
+async def gerar_deliberacoes(
+    transcricao: str,
+    dados_manuais: str,
+    cfg: BackendConfig,
+    fallback: BackendConfig | None,
+) -> str:
+    """Extrai as deliberações e encaminhamentos da reunião (raciocínio ativo)."""
+    logger.info("[Deliberações] Gerando…")
+    prompt = PROMPT_DELIBERACOES.format(
         transcricao=transcricao,
         dados_manuais=dados_manuais,
     )
-    logger.info("Gerando deliberações da ATA (%d chars)...", len(transcricao))
-    response = await client.chat.completions.create(
-        model=MODEL_TINY,
-        reasoning_effort="high",
-        messages=[{"role": "user", "content": prompt_formatado}],
+    result = await _completion(
+        cfg=cfg, fallback=fallback,
+        messages=[{"role": "user", "content": prompt}],
+        reasoning=True,
     )
-    deliberacoes = response.choices[0].message.content.strip()
-    logger.info("Deliberações geradas (%d chars).", len(deliberacoes))
-    return deliberacoes
+    logger.info("[Deliberações] Concluídas (%d chars).", len(result))
+    return result
 
 
 async def validar_ata(
@@ -94,95 +245,127 @@ async def validar_ata(
     participantes: list[str],
     topicos: list[str],
     deliberacoes: list[str],
+    cfg: BackendConfig,
+    fallback: BackendConfig | None,
 ) -> dict:
-    prompt_formatado = PROMPT_VALIDADOR.format(
+    """
+    Valida e consolida participantes, tópicos e deliberações.
+    Retorna um dict com as três listas já refinadas.
+    """
+    logger.info("[Validador] Validando ATA…")
+    prompt = PROMPT_VALIDADOR.format(
         transcricao=transcricao_corrigida,
         dados_manuais=dados_manuais,
         participantes=", ".join(participantes),
         topicos="\n".join(f"- {t}" for t in topicos),
         deliberacoes="\n".join(f"- {d}" for d in deliberacoes),
     )
-
-    logger.info("Validando ATA gerada...")
-    response = await client.chat.completions.create(
-        model=MODEL_LARGE,
-        messages=[{"role": "user", "content": prompt_formatado}],
+    raw = await _completion(
+        cfg=cfg, fallback=fallback,
+        messages=[{"role": "user", "content": prompt}],
+        reasoning=False,
     )
-
-    raw = response.choices[0].message.content.strip()
     raw = raw.replace("```json", "").replace("```", "").strip()
 
     try:
         resultado = json.loads(raw)
     except json.JSONDecodeError:
-        logger.warning("Validador retornou JSON inválido, usando dados originais.")
+        logger.warning("[Validador] JSON inválido retornado — usando dados originais.")
         resultado = {
             "participantes": participantes,
-            "topicos": topicos,
-            "deliberacoes": deliberacoes,
+            "topicos":       topicos,
+            "deliberacoes":  deliberacoes,
         }
 
-    logger.info("Validação concluída.")
+    logger.info("[Validador] Concluído.")
     return resultado
 
 
-async def estruturar_ata(transcricao: str, dados_manuais: dict) -> dict:
+# ---------------------------------------------------------------------------
+# Pipeline principal
+# ---------------------------------------------------------------------------
+
+async def estruturar_ata(
+    transcricao: str,
+    dados_manuais: dict,
+    *,
+    mode: BackendMode = BackendMode.LOCAL,
+) -> dict:
+    """
+    Orquestra todos os agentes e retorna a estrutura completa da ATA.
+
+    Args:
+        transcricao:   Texto bruto da transcrição da reunião.
+        dados_manuais: Metadados complementares (data, local, participantes…).
+        mode:          Estratégia de backend (OPENAI | LOCAL | AUTO).
+
+    Returns:
+        dict com tema, resumo, assuntos_discutidos, deliberacoes,
+        participantes e ausentes.
+    """
+    cfg, fallback = _resolve_backends(mode)
+    logger.info("▶ Pipeline iniciado | backend=%s | fallback=%s",
+                cfg.name, fallback.name if fallback else "nenhum")
+
     inicio_total = time.time()
+    dados_str    = "\n".join(f"{k}: {v}" for k, v in dados_manuais.items())
 
-    dados_str = "\n".join(f"{k}: {v}" for k, v in dados_manuais.items())
-
-    # Correção
-    inicio = time.time()
-    transcricao_corrigida = await corrigir_transcricao(transcricao, dados_str)
-    logger.info("⏱ Correção: %.1fs", time.time() - inicio)
-
-    # Agentes paralelos
-    inicio = time.time()
-    introducao_raw, topicos_raw, deliberacoes_raw = await asyncio.gather(
-        gerar_introducao(transcricao_corrigida, dados_str),
-        gerar_topicos(transcricao_corrigida, dados_str),
-        gerar_deliberacoes(transcricao_corrigida, dados_str),
+    # ── 1. Correção ──────────────────────────────────────────────────────────
+    t0 = time.time()
+    transcricao_corrigida = await corrigir_transcricao(
+        transcricao, dados_str, cfg, fallback
     )
-    logger.info("⏱ Agentes paralelos: %.1fs", time.time() - inicio)
+    logger.info("⏱ Correção: %.1fs", time.time() - t0)
 
-    # Parse introdução
-    linhas = introducao_raw.strip().splitlines()
+    # ── 2. Agentes paralelos ──────────────────────────────────────────────────
+    t0 = time.time()
+    introducao_raw, topicos_raw, deliberacoes_raw = await asyncio.gather(
+        gerar_introducao(transcricao_corrigida, dados_str, cfg, fallback),
+        gerar_topicos(transcricao_corrigida, dados_str, cfg, fallback),
+        gerar_deliberacoes(transcricao_corrigida, dados_str, cfg, fallback),
+    )
+    logger.info("⏱ Agentes paralelos: %.1fs", time.time() - t0)
+
+    # ── 3. Parse introdução ───────────────────────────────────────────────────
     tema = ""
-    introducao_partes = []
-    for linha in linhas:
+    introducao_partes: list[str] = []
+    for linha in introducao_raw.strip().splitlines():
         if linha.startswith("Tema da Reunião:"):
             tema = linha.replace("Tema da Reunião:", "").strip()
         elif linha.strip():
             introducao_partes.append(linha.strip())
     introducao = "\n".join(introducao_partes)
 
-    topicos_list = [t.strip("•-– ").strip() for t in topicos_raw.splitlines() if t.strip()]
+    topicos_list      = [t.strip("•-– ").strip() for t in topicos_raw.splitlines()      if t.strip()]
     deliberacoes_list = [d.strip("•-– ").strip() for d in deliberacoes_raw.splitlines() if d.strip()]
 
     participantes_raw = dados_manuais.get("participantes", "")
-    if isinstance(participantes_raw, list):
-        participantes_list = participantes_raw
-    else:
-        participantes_list = [p.strip() for p in participantes_raw.split(",") if p.strip()]
+    participantes_list: list[str] = (
+        participantes_raw
+        if isinstance(participantes_raw, list)
+        else [p.strip() for p in participantes_raw.split(",") if p.strip()]
+    )
 
-    # Validação
-    inicio = time.time()
+    # ── 4. Validação ──────────────────────────────────────────────────────────
+    t0 = time.time()
     validado = await validar_ata(
         transcricao_corrigida=transcricao_corrigida,
         dados_manuais=dados_str,
         participantes=participantes_list,
         topicos=topicos_list,
         deliberacoes=deliberacoes_list,
+        cfg=cfg,
+        fallback=fallback,
     )
-    logger.info("⏱ Validação: %.1fs", time.time() - inicio)
+    logger.info("⏱ Validação: %.1fs", time.time() - t0)
 
-    logger.info("⏱ TOTAL PIPELINE: %.1fs", time.time() - inicio_total)
+    logger.info("✅ Pipeline concluído | TOTAL: %.1fs", time.time() - inicio_total)
 
     return {
-        "tema": tema,
-        "resumo": introducao,
+        "tema":               tema,
+        "resumo":             introducao,
         "assuntos_discutidos": validado["topicos"],
-        "deliberacoes": validado["deliberacoes"],
-        "participantes": validado["participantes"],
-        "ausentes": dados_manuais.get("ausentes", ""),
+        "deliberacoes":        validado["deliberacoes"],
+        "participantes":       validado["participantes"],
+        "ausentes":            dados_manuais.get("ausentes", ""),
     }
