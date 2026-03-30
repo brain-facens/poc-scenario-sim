@@ -19,6 +19,7 @@ from modules.scenario_sim.services.simulation_services import (
     cleanup_timed_out_simulations,
     process_stale_queue,
 )
+from modules.voice_changer.routes.voice_changer_routes import voice_changer_router
 
 
 @repeat_every(seconds=300)
@@ -69,6 +70,9 @@ app.include_router(material_router)
 
 # Gerador de ATAs
 app.include_router(atas_router)
+
+# Voice Changer
+app.include_router(voice_changer_router)
 
 if __name__ == "__main__":
     uvicorn.run("app:app", reload=True, timeout_keep_alive=120)
