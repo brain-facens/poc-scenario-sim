@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, UploadFile, File, Form, Depends
 from fastapi.responses import Response, JSONResponse
 from ..services.voice_changer_services import check_health, change_voice, get_audio_response
@@ -15,7 +17,7 @@ def api_health():
 
 @voice_changer_router.post("/services/voice_change")
 def api_change_voice(
-    menu_item: str,
+    menu_item: Literal['Girl', 'Boy', 'Woman', 'Man'],
     file: UploadFile = File(...)
 ):
     """
