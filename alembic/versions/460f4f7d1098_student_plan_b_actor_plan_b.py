@@ -1,8 +1,8 @@
-"""gen db
+"""student_plan_b -> actor_plan_b
 
-Revision ID: 197baf5f90c0
+Revision ID: 460f4f7d1098
 Revises: 
-Create Date: 2026-03-16 09:10:44.230452
+Create Date: 2026-03-24 14:14:09.302843
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '197baf5f90c0'
+revision: str = '460f4f7d1098'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -32,6 +32,17 @@ def upgrade() -> None:
         batch_op.create_index(batch_op.f('ix_simulation_inputs_id'), ['id'], unique=False)
         batch_op.create_index(batch_op.f('ix_simulation_inputs_pitch'), ['pitch'], unique=False)
 
+    op.create_table('transcricoes',
+    sa.Column('id', sa.String(length=36), nullable=False),
+    sa.Column('transcricao', sa.Text(), nullable=False),
+    sa.Column('elapsed_seconds', sa.Float(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    with op.batch_alter_table('transcricoes', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_transcricoes_id'), ['id'], unique=False)
+
     op.create_table('users',
     sa.Column('id', sa.String(length=36), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
@@ -47,6 +58,37 @@ def upgrade() -> None:
         batch_op.create_index(batch_op.f('ix_users_email'), ['email'], unique=True)
         batch_op.create_index(batch_op.f('ix_users_id'), ['id'], unique=False)
         batch_op.create_index(batch_op.f('ix_users_name'), ['name'], unique=True)
+
+    op.create_table('atas',
+    sa.Column('id', sa.String(length=36), nullable=False),
+    sa.Column('numero_ata', sa.String(), nullable=True),
+    sa.Column('orgao', sa.String(), nullable=True),
+    sa.Column('sala', sa.String(), nullable=True),
+    sa.Column('dia', sa.String(), nullable=True),
+    sa.Column('mes', sa.String(), nullable=True),
+    sa.Column('n_ano', sa.String(), nullable=True),
+    sa.Column('hora_inicio', sa.String(), nullable=True),
+    sa.Column('minutos_inicio', sa.String(), nullable=True),
+    sa.Column('hora_fim', sa.String(), nullable=True),
+    sa.Column('minutos_fim', sa.String(), nullable=True),
+    sa.Column('participantes', sa.Text(), nullable=True),
+    sa.Column('ausentes', sa.Text(), nullable=True),
+    sa.Column('condutor', sa.String(), nullable=True),
+    sa.Column('secretario', sa.String(), nullable=True),
+    sa.Column('tema', sa.String(), nullable=True),
+    sa.Column('resumo', sa.Text(), nullable=True),
+    sa.Column('assuntos_discutidos', sa.Text(), nullable=True),
+    sa.Column('deliberacoes', sa.Text(), nullable=True),
+    sa.Column('transcricao_id', sa.String(length=36), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['transcricao_id'], ['transcricoes.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('transcricao_id')
+    )
+    with op.batch_alter_table('atas', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_atas_id'), ['id'], unique=False)
+        batch_op.create_index(batch_op.f('ix_atas_numero_ata'), ['numero_ata'], unique=False)
 
     op.create_table('simulations',
     sa.Column('id', sa.String(length=36), nullable=False),
@@ -110,7 +152,7 @@ def upgrade() -> None:
     sa.Column('id', sa.String(length=36), nullable=False),
     sa.Column('student_plan_a', sa.Text(), nullable=True),
     sa.Column('actor_sim_directions', sa.Text(), nullable=True),
-    sa.Column('student_plan_b', sa.Text(), nullable=True),
+    sa.Column('actor_plan_b', sa.Text(), nullable=True),
     sa.Column('sequence_number', sa.Integer(), nullable=True),
     sa.Column('simulation_id', sa.String(length=36), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
@@ -143,12 +185,21 @@ def downgrade() -> None:
         batch_op.drop_index(batch_op.f('ix_simulations_id'))
 
     op.drop_table('simulations')
+    with op.batch_alter_table('atas', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_atas_numero_ata'))
+        batch_op.drop_index(batch_op.f('ix_atas_id'))
+
+    op.drop_table('atas')
     with op.batch_alter_table('users', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_users_name'))
         batch_op.drop_index(batch_op.f('ix_users_id'))
         batch_op.drop_index(batch_op.f('ix_users_email'))
 
     op.drop_table('users')
+    with op.batch_alter_table('transcricoes', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_transcricoes_id'))
+
+    op.drop_table('transcricoes')
     with op.batch_alter_table('simulation_inputs', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_simulation_inputs_pitch'))
         batch_op.drop_index(batch_op.f('ix_simulation_inputs_id'))

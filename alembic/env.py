@@ -23,6 +23,10 @@ from modules.scenario_sim.models.material_model import Material
 from modules.scenario_sim.models.actor_model import Actor
 from modules.scenario_sim.models.scene_model import Scene
 
+# Ata generation module models
+from modules.gerador_atas.models.ata_model import AtaModel
+from modules.gerador_atas.models.ata_model import TranscricaoModel
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

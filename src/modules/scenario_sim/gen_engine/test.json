@@ -1,50 +1,50 @@
 {
-    "scene_organization": "Simulação de Atendimento Domiciliar para Idoso com Medo de Agulhas",
-    "scene_participants": {
-        "uses_simulator": true,
-        "students_quantity": 1,
-        "actors_quantity": 2,
-        "students_role": "Médico residente (praticante)",
-        "actors_role": "Idoso com medo de agulhas e enfermeira orientadora",
-        "simulator_role": "Monitorar protocolos e avaliar conduta médica"
+  "scene_organization": "Simulação de Atendimento Domiciliar para Idoso com Medo de Agulhas",
+  "scene_participants": {
+    "uses_simulator": true,
+    "students_quantity": 1,
+    "actors_quantity": 2,
+    "students_role": "Médico residente (praticante)",
+    "actors_role": "Idoso com medo de agulhas e enfermeira orientadora",
+    "simulator_role": "Monitorar protocolos e avaliar conduta médica"
+  },
+  "case_presentation": "**Cenário:** Um idoso de 78 anos com histórico de hipertensão e diabetes apresenta dificuldade para medir glicose devido ao medo de agulhas. O objetivo é realizar a coleta de sangue para controle metabólico, usando abordagem humanizada.",
+  "actor_briefing": [
+    {
+      "personal_data": "Idoso com 78 anos, idoso, portador de diabetes tipo 2 e hipertensão, com histórico de trauma com agulhas em infância",
+      "current_story": "Reclama dor no braço direito e evita qualquer contato com agulhas. Exige que a coleta seja feita no braço esquerdo, mas tem medo de sentir dor.",
+      "previous_story": "Foi submetido a hemocultura há 6 meses por sepse, o que agravou o medo",
+      "clothing": "Roupas de casa e um bracelete com medidor de tensão arterial",
+      "behavior_profile": "Reativo, com tremores nas mãos e evita contato visual. Acessa informações sobre diabetes na internet e tem ideia fixa de que agulhas são 'perigosas'"
     },
-    "case_presentation": "**Cenário:** Um idoso de 78 anos com histórico de hipertensão e diabetes apresenta dificuldade para medir glicose devido ao medo de agulhas. O objetivo é realizar a coleta de sangue para controle metabólico, usando abordagem humanizada.",
-    "actor_briefing": [
-        {
-            "personal_data": "Idoso com 78 anos, idoso, portador de diabetes tipo 2 e hipertensão, com histórico de trauma com agulhas em infância",
-            "current_story": "Reclama dor no braço direito e evita qualquer contato com agulhas. Exige que a coleta seja feita no braço esquerdo, mas tem medo de sentir dor.",
-            "previous_story": "Foi submetido a hemocultura há 6 meses por sepse, o que agravou o medo",
-            "clothing": "Roupas de casa e um bracelete com medidor de tensão arterial",
-            "behavior_profile": "Reativo, com tremores nas mãos e evita contato visual. Acessa informações sobre diabetes na internet e tem ideia fixa de que agulhas são 'perigosas'"
-        },
-        {
-            "personal_data": "Enfermeira de plantão, 35 anos, com experiência em atendimento domiciliar",
-            "current_story": "Auxilia o médico em situações de ansiedade do paciente, usando técnicas de descontração e comunicação simpatética",
-            "previous_story": "Já atendeu 12 casos semelhantes com sucesso",
-            "clothing": "Uniforme hospitalar com mangas curtas e um kit de atendimento",
-            "behavior_profile": "Calma, com habilidades em psicoterapia ocupacional básica e comunicação não violenta"
-        }
-    ],
-    "simulator_parameters": "Monitorar a aderência aos protocolos de biosegurança, verificar a eficácia das técnicas de anestesia local e avaliar a capacidade de lidar com reações adversas",
-    "simulator_evolution_parameters": "**Critérios de sucesso:**\n- 100% de adesão ao protocolo de manipulação de agulhas\n- Redução de 50% na ansiedade do paciente (escala visual analógica)\n- Ausência de complicações durante a coleta\n- 100% de satisfação do paciente no feedback final",
-    "students_briefing": "**Objetivos:**\n1. Realizar coleta de sangue de forma segura e humanizada\n2. Aplicar anestésico local corretamente\n3. Gerenciar a ansiedade do paciente com técnicas de comunicação\n4. Registrar todos os passos do atendimento\n\n**Plano B:**\n- Se o paciente continuar com medo, substituir agulha por microsangria (técnicas de punção superficial)\n- Usar distratores sensoriais (música ou conversa) durante o procedimento\n- Solicitar ajuda da enfermeira para manter o braço do paciente imóvel",
-    "scene_flow": [
-        {
-            "student_role": "Médico residente",
-            "actor_sim_role": "Idoso",
-            "student_plan_b": "Usar microsangria se necessário"
-        },
-        {
-            "student_role": "Médico residente",
-            "actor_sim_role": "Enfermeira",
-            "student_plan_b": "Reforçar técnicas de punção superficial"
-        },
-        {
-            "student_role": "Méd, enfermeira",
-            "actor_sim_role": "Idoso",
-            "student_plan_b": "Avaliar hospitalização para monitoramento"
-        }
-    ],
-    "debriefing": "**Avaliação Final:**\n- Análise da eficácia da comunicação do médico\n- Verificação da correta aplicação de técnicas de anestesia\n- Registro da resposta emocional do paciente\n- Identificação de lacunas na abordagem",
-    "appendix": "*Sugestão: Se o paciente rechaçar qualquer procedimento, considerar o uso de dispositivos de coleta de sangue sem agulhas (ex: lancetas de microsangria) como alternativa para evitar danos psicológicos*"
+    {
+      "personal_data": "Enfermeira de plantão, 35 anos, com experiência em atendimento domiciliar",
+      "current_story": "Auxilia o médico em situações de ansiedade do paciente, usando técnicas de descontração e comunicação simpatética",
+      "previous_story": "Já atendeu 12 casos semelhantes com sucesso",
+      "clothing": "Uniforme hospitalar com mangas curtas e um kit de atendimento",
+      "behavior_profile": "Calma, com habilidades em psicoterapia ocupacional básica e comunicação não violenta"
+    }
+  ],
+  "simulator_parameters": "Monitorar a aderência aos protocolos de biosegurança, verificar a eficácia das técnicas de anestesia local e avaliar a capacidade de lidar com reações adversas",
+  "simulator_evolution_parameters": "**Critérios de sucesso:**\n- 100% de adesão ao protocolo de manipulação de agulhas\n- Redução de 50% na ansiedade do paciente (escala visual analógica)\n- Ausência de complicações durante a coleta\n- 100% de satisfação do paciente no feedback final",
+  "students_briefing": "**Objetivos:**\n1. Realizar coleta de sangue de forma segura e humanizada\n2. Aplicar anestésico local corretamente\n3. Gerenciar a ansiedade do paciente com técnicas de comunicação\n4. Registrar todos os passos do atendimento\n\n**Plano B:**\n- Se o paciente continuar com medo, substituir agulha por microsangria (técnicas de punção superficial)\n- Usar distratores sensoriais (música ou conversa) durante o procedimento\n- Solicitar ajuda da enfermeira para manter o braço do paciente imóvel",
+  "scene_flow": [
+    {
+      "student_role": "Médico residente",
+      "actor_sim_role": "Idoso",
+      "actor_plan_b": "Usar microsangria se necessário"
+    },
+    {
+      "student_role": "Médico residente",
+      "actor_sim_role": "Enfermeira",
+      "actor_plan_b": "Reforçar técnicas de punção superficial"
+    },
+    {
+      "student_role": "Méd, enfermeira",
+      "actor_sim_role": "Idoso",
+      "actor_plan_b": "Avaliar hospitalização para monitoramento"
+    }
+  ],
+  "debriefing": "**Avaliação Final:**\n- Análise da eficácia da comunicação do médico\n- Verificação da correta aplicação de técnicas de anestesia\n- Registro da resposta emocional do paciente\n- Identificação de lacunas na abordagem",
+  "appendix": "*Sugestão: Se o paciente rechaçar qualquer procedimento, considerar o uso de dispositivos de coleta de sangue sem agulhas (ex: lancetas de microsangria) como alternativa para evitar danos psicológicos*"
 }

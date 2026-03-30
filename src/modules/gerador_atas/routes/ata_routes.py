@@ -1,7 +1,9 @@
 import os
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status, Depends
 from fastapi.responses import Response
+from sqlalchemy.orm import Session
+from database import get_db
 
 from modules.gerador_atas.schemas.ata_schemas import TranscricaoResponse
 from modules.gerador_atas.services.ata_services import (
@@ -19,7 +21,7 @@ async def atas_health():
 
 
 @atas_router.post("/transcrever", response_model=TranscricaoResponse)
-async def transcrever_audio(file: UploadFile = File(...)):
+async def transcrever_audio(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """
     Transcribes an uploaded audio file using WhisperX with speaker diarization.
 
@@ -32,7 +34,7 @@ async def transcrever_audio(file: UploadFile = File(...)):
     suffix = os.path.splitext(file.filename or ".wav")[1] or ".wav"
 
     try:
-        transcricao, elapsed = await transcrever_audio_service(content, suffix=suffix)
+        transcricao, elapsed, _ = await transcrever_audio_service(db, content, suffix=suffix)
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -58,6 +60,7 @@ async def gerar_ata_doc(
     condutor:        str        = Form(...),
     secretario:      str        = Form(...),
     info_adicional:  str        = Form(""),
+    db: Session = Depends(get_db),
 ):
     """
     Generates an ATA (.docx) from a meeting transcription and manual metadata.
@@ -69,13 +72,14 @@ async def gerar_ata_doc(
     Returns the .docx file as a binary attachment.
     """
     # --- Resolve transcription ---
+    transcricao_id = None
     if transcricao.strip():
         pass  # Use provided text directly
     elif file is not None:
         content = await file.read()
         suffix = os.path.splitext(file.filename or ".wav")[1] or ".wav"
         try:
-            transcricao, _ = await transcrever_audio_service(content, suffix=suffix)
+            transcricao, _, transcricao_id = await transcrever_audio_service(db, content, suffix=suffix)
         except Exception as exc:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -90,6 +94,7 @@ async def gerar_ata_doc(
     # --- Generate DOCX via service ---
     try:
         docx_bytes, filename = await gerar_ata_docx_service(
+            db=db,
             transcricao=transcricao,
             numero_ata=numero_ata,
             orgao=orgao,
@@ -101,6 +106,7 @@ async def gerar_ata_doc(
             condutor=condutor,
             secretario=secretario,
             info_adicional=info_adicional,
+            transcricao_id=transcricao_id,
         )
     except Exception as exc:
         raise HTTPException(
