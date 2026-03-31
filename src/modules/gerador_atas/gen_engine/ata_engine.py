@@ -13,7 +13,9 @@ import logging
 import os
 import time
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
+from pathlib import Path
 
 from dotenv import find_dotenv, load_dotenv
 from openai import AsyncOpenAI, AuthenticationError, RateLimitError
@@ -25,6 +27,20 @@ from modules.gerador_atas.gen_engine.prompts.ata_prompts import (
     PROMPT_TOPICOS,
     PROMPT_VALIDADOR,
 )
+
+LOG_DIR = Path("logs")
+LOG_DIR.mkdir(exist_ok=True)
+
+LLM_LOG_FILE = LOG_DIR / "ata_llm_calls.jsonl"
+
+
+def _append_llm_log(payload: dict) -> None:
+    """Grava uma linha JSON por chamada de LLM."""
+    try:
+        with LLM_LOG_FILE.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(payload, ensure_ascii=False) + "\n")
+    except Exception as e:
+        logger.warning("Falha ao gravar log de LLM: %s", e)
 
 # ---------------------------------------------------------------------------
 # Configuração
@@ -65,10 +81,10 @@ def _build_backends() -> tuple[BackendConfig, BackendConfig]:
     local_config = BackendConfig(
         client=AsyncOpenAI(
         base_url="http://172.16.51.162:11434/v1/",
-        api_key="ollama",  # pode ser qualquer valor; o Ollama ignora
+        api_key="ollama",  
     ),
         model_large="qwen3.5:latest",
-        model_small="qwen3.5:4b",
+        model_small="qwen3.5:latest",
         name="Local (Ollama)",
     )
 
@@ -89,57 +105,142 @@ _QUOTA_ERRORS = (
 # Helper de chamada com fallback
 # ---------------------------------------------------------------------------
 
+def _coerce_message_content_to_text(content) -> str:
+    """
+    Normaliza o content retornado pelo modelo para texto.
+    Compatível com str, dict, list e None.
+    """
+    if isinstance(content, str):
+        return content.strip()
+
+    if isinstance(content, dict):
+        return json.dumps(content, ensure_ascii=False)
+
+    if isinstance(content, list):
+        partes: list[str] = []
+        for item in content:
+            if isinstance(item, str):
+                partes.append(item)
+            elif isinstance(item, dict):
+                if "text" in item and isinstance(item["text"], str):
+                    partes.append(item["text"])
+                else:
+                    partes.append(json.dumps(item, ensure_ascii=False))
+            elif item is None:
+                continue
+            else:
+                partes.append(str(item))
+        return "\n".join(partes).strip()
+
+    if content is None:
+        return ""
+
+    return str(content).strip()
+
+
 async def _completion(
     *,
     cfg: BackendConfig,
     fallback: BackendConfig | None,
     messages: list[dict],
     reasoning: bool = False,
+    agent_name: str = "desconhecido",
 ) -> str:
     """
     Executa uma chamada chat.completions usando `cfg`.
     Se `fallback` for fornecido e a chamada falhar por cota/auth, retenta
     com `fallback` automaticamente.
-
-    Args:
-        cfg:       configuração principal (cliente + modelo)
-        fallback:  configuração de reserva ou None
-        messages:  lista de mensagens no formato OpenAI
-        reasoning: se True usa o model_small com reasoning_effort='high',
-                   caso contrário usa model_large sem reasoning
-    Returns:
-        Conteúdo textual da resposta (str)
     """
-    model   = cfg.model_small if reasoning else cfg.model_large
+    model = cfg.model_small if reasoning else cfg.model_large
     kwargs: dict = dict(model=model, messages=messages)
     if reasoning:
         kwargs["reasoning_effort"] = "high"
 
+    prompt_text = "\n\n".join(
+        f"[{m.get('role', 'user')}]\n{m.get('content', '')}" for m in messages
+    )
+    started_at = datetime.utcnow().isoformat() + "Z"
+    t0 = time.time()
+
     try:
-        logger.debug("[%s] Chamando modelo '%s'…", cfg.name, model)
+        logger.debug("[%s|%s] Chamando modelo '%s'…", agent_name, cfg.name, model)
         resp = await cfg.client.chat.completions.create(**kwargs)
-        return resp.choices[0].message.content.strip()
+
+        raw_content = resp.choices[0].message.content
+        content = _coerce_message_content_to_text(raw_content)
+        duration = round(time.time() - t0, 3)
+
+        _append_llm_log({
+            "timestamp": started_at,
+            "agent": agent_name,
+            "backend": cfg.name,
+            "model": model,
+            "reasoning": reasoning,
+            "prompt_chars": len(prompt_text),
+            "response_chars": len(content),
+            "duration_seconds": duration,
+            "prompt": prompt_text,
+            "response": content,
+            "status": "success",
+        })
+
+        return content
 
     except (RateLimitError, AuthenticationError) as exc:
-        # Verifica se é realmente falta de cota/crédito
+        duration = round(time.time() - t0, 3)
+
+        _append_llm_log({
+            "timestamp": started_at,
+            "agent": agent_name,
+            "backend": cfg.name,
+            "model": model,
+            "reasoning": reasoning,
+            "prompt_chars": len(prompt_text),
+            "duration_seconds": duration,
+            "prompt": prompt_text,
+            "error_type": type(exc).__name__,
+            "error_message": str(exc),
+            "status": "error",
+        })
+
         is_quota = any(code in str(exc).lower() for code in _QUOTA_ERRORS)
-        is_auth  = isinstance(exc, AuthenticationError)
+        is_auth = isinstance(exc, AuthenticationError)
 
         if (is_quota or is_auth) and fallback is not None:
             logger.warning(
-                "[%s] Falha (%s). Redirecionando para backend '%s'…",
-                cfg.name, type(exc).__name__, fallback.name,
+                "[%s|%s] Falha (%s). Redirecionando para backend '%s'…",
+                agent_name, cfg.name, type(exc).__name__, fallback.name,
             )
             return await _completion(
                 cfg=fallback,
-                fallback=None,      # sem fallback recursivo
+                fallback=None,
                 messages=messages,
                 reasoning=reasoning,
+                agent_name=agent_name,
             )
 
-        logger.error("[%s] Sem fallback disponível. Erro: %s", cfg.name, exc)
+        logger.error("[%s|%s] Sem fallback disponível. Erro: %s", agent_name, cfg.name, exc)
         raise
 
+    except Exception as exc:
+        duration = round(time.time() - t0, 3)
+
+        _append_llm_log({
+            "timestamp": started_at,
+            "agent": agent_name,
+            "backend": cfg.name,
+            "model": model,
+            "reasoning": reasoning,
+            "prompt_chars": len(prompt_text),
+            "duration_seconds": duration,
+            "prompt": prompt_text,
+            "error_type": type(exc).__name__,
+            "error_message": str(exc),
+            "status": "error",
+        })
+
+        logger.error("[%s|%s] Erro inesperado: %s", agent_name, cfg.name, exc)
+        raise
 
 def _resolve_backends(mode: BackendMode) -> tuple[BackendConfig, BackendConfig | None]:
     """Retorna (cfg_principal, cfg_fallback) conforme o modo."""
@@ -149,7 +250,6 @@ def _resolve_backends(mode: BackendMode) -> tuple[BackendConfig, BackendConfig |
         return BACKEND_LOCAL, None
     # AUTO → OpenAI com fallback para local
     return BACKEND_OPENAI, BACKEND_LOCAL
-
 
 # ---------------------------------------------------------------------------
 # Agentes
@@ -171,6 +271,7 @@ async def corrigir_transcricao(
         cfg=cfg, fallback=fallback,
         messages=[{"role": "user", "content": prompt}],
         reasoning=False,
+        agent_name="Corretor",
     )
     logger.info("[Corretor] Concluído (%d chars).", len(result))
     return result
@@ -192,6 +293,7 @@ async def gerar_introducao(
         cfg=cfg, fallback=fallback,
         messages=[{"role": "user", "content": prompt}],
         reasoning=False,
+        agent_name="Introdução",
     )
     logger.info("[Introdução] Concluída (%d chars).", len(result))
     return result
@@ -213,6 +315,7 @@ async def gerar_topicos(
         cfg=cfg, fallback=fallback,
         messages=[{"role": "user", "content": prompt}],
         reasoning=True,
+        agent_name="Topicos"
     )
     logger.info("[Tópicos] Concluídos (%d chars).", len(result))
     return result
@@ -234,6 +337,7 @@ async def gerar_deliberacoes(
         cfg=cfg, fallback=fallback,
         messages=[{"role": "user", "content": prompt}],
         reasoning=True,
+        agent_name="Deliberações"
     )
     logger.info("[Deliberações] Concluídas (%d chars).", len(result))
     return result
@@ -260,21 +364,24 @@ async def validar_ata(
         topicos="\n".join(f"- {t}" for t in topicos),
         deliberacoes="\n".join(f"- {d}" for d in deliberacoes),
     )
+
     raw = await _completion(
-        cfg=cfg, fallback=fallback,
+        cfg=cfg,
+        fallback=fallback,
         messages=[{"role": "user", "content": prompt}],
-        reasoning=False,
+        reasoning=True,
+        agent_name="Validador",
     )
-    raw = raw.replace("```json", "").replace("```", "").strip()
 
     try:
-        resultado = json.loads(raw)
-    except json.JSONDecodeError:
+        raw_text = str(raw).replace("```json", "").replace("```", "").strip()
+        resultado = json.loads(raw_text)
+    except (json.JSONDecodeError, TypeError, ValueError):
         logger.warning("[Validador] JSON inválido retornado — usando dados originais.")
         resultado = {
             "participantes": participantes,
-            "topicos":       topicos,
-            "deliberacoes":  deliberacoes,
+            "topicos": topicos,
+            "deliberacoes": deliberacoes,
         }
 
     logger.info("[Validador] Concluído.")
