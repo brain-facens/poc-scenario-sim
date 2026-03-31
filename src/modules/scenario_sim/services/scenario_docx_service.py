@@ -10,9 +10,7 @@ from ..gen_engine.gen_parts.scenario import Scenario
 # Resolve relative to this file's location so the module is portable.
 _MODULE_DIR = Path(__file__).parent.parent  # modules/scenario_sim/
 TEMPLATE_PATH = str(
-    Path(__file__).parent.parent.parent.parent.parent
-    / "assets"
-    / "Template Cenário_Facens.docx"
+    Path(__file__).parent.parent.parent.parent.parent / "assets" / "ATA_teste.docx"
 )
 
 NS = (
@@ -202,14 +200,14 @@ def build_scenario_document_xml(scenario: Scenario):
     pars = []
 
     # Títulos
-    pars.append(
-        p(
-            f" cenário: {scenario.learning_objectives[:50]}.",
-            bold=True,
-            center=True,
-            size=28,
-        )
-    )
+    # pars.append(
+    #     p(
+    #         f" cenário: {scenario.learning_objectives[:50]}.",
+    #         bold=True,
+    #         center=True,
+    #         size=28,
+    #     )
+    # )
     pars.append(
         p("UniFacens - Centro Universitário Facens", bold=True, center=True, size=24)
     )

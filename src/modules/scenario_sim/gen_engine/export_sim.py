@@ -9,9 +9,9 @@ from modules.scenario_sim.gen_engine.sim_agents.html_agent import html_agent
 from modules.scenario_sim.services.scenario_docx_service import save_scenario_docx
 
 
-def path_builder() -> str:
+def path_builder(*, format: str = ".pdf") -> str:
     date: str = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    path: str = f"./pdf_exports/simulação-{date}.pdf"
+    path: str = f"./pdf_exports/simulação-{date}{format}"
     abs_path = os.path.abspath(path)
     os.makedirs(os.path.dirname(abs_path), exist_ok=True)
     return abs_path
@@ -37,5 +37,5 @@ async def export_pdf(scenario: Scenario) -> str:
 
 
 async def export_docx(scenario: Scenario) -> str:
-    abs_path = path_builder()
+    abs_path = path_builder(format=".docx")
     return save_scenario_docx(scenario, abs_path)

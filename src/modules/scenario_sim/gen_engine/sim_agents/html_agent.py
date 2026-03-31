@@ -11,7 +11,7 @@ local_client: AsyncOpenAI = AsyncOpenAI(
 )
 
 model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
-    model="qwen3.5:9b", openai_client=local_client
+    model="qwen3.5:latest", openai_client=local_client
 )
 
 html_agent: Agent = Agent[Scenario](
