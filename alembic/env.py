@@ -27,6 +27,9 @@ from modules.scenario_sim.models.scene_model import Scene
 from modules.gerador_atas.models.ata_model import AtaModel
 from modules.gerador_atas.models.ata_model import TranscricaoModel
 
+# Logging module models
+from modules.logging.models.request_log_model import RequestLog
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

@@ -19,6 +19,7 @@ from modules.scenario_sim.services.simulation_services import (
     cleanup_timed_out_simulations,
     process_stale_queue,
 )
+from modules.logging.middleware.request_logging_middleware import RequestLoggingMiddleware
 from modules.voice_changer.routes.voice_changer_routes import voice_changer_router
 
 
@@ -47,6 +48,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Brain Hub API", lifespan=lifespan)
+
+# --- Middleware (order matters: last added = outermost) ---
+app.add_middleware(RequestLoggingMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
