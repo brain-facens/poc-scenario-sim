@@ -1,14 +1,17 @@
 import os
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status, Depends
+from typing import Optional
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status, Depends, Query
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from database import get_db
 
-from modules.gerador_atas.schemas.ata_schemas import TranscricaoResponse
+from modules.gerador_atas.schemas.ata_schemas import TranscricaoResponse, AtaData
+from core.pagination import PaginatedResponse
 from modules.gerador_atas.services.ata_services import (
     gerar_ata_docx_service,
     transcrever_audio_service,
+    get_atas_service,
 )
 
 atas_router = APIRouter(prefix="/atas", tags=["atas"])
@@ -18,6 +21,20 @@ atas_router = APIRouter(prefix="/atas", tags=["atas"])
 async def atas_health():
     """Health-check for the gerador_atas module."""
     return {"status": "ok", "module": "gerador_atas"}
+
+
+@atas_router.get("/", response_model=PaginatedResponse[AtaData])
+def get_atas(
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(10, ge=1, le=100, description="Items per page"),
+    numero_ata: Optional[str] = Query(None, description="Filter by ata number"),
+    tema: Optional[str] = Query(None, description="Filter by theme")
+):
+    """
+    Returns a paginated list of atas in the database, with optional filtering.
+    """
+    return get_atas_service(db, page=page, limit=limit, numero_ata=numero_ata, tema=tema)
 
 
 @atas_router.post("/transcrever", response_model=TranscricaoResponse)

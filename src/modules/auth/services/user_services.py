@@ -1,8 +1,10 @@
 from fastapi import HTTPException, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from core.security import hash_password, verify_password
+from core.pagination import paginate_and_filter
 from modules.auth.models.user_model import User
 from modules.auth.schemas.user_schemas import UserCreate, UserUpdate
 
@@ -34,18 +36,15 @@ def create_user_service(db: Session, user_data: UserCreate):
     return db_user
 
 
-def get_all_users_service(db: Session, page: int, limit: int):
-    offset = (page - 1) * limit
-
-    total_count = db.query(User).count()
-    users = db.query(User).offset(offset).limit(limit).all()
-
-    return {
-        "total": total_count,
-        "page": page,
-        "limit": limit,
-        "users": users
-    }
+def get_all_users_service(db: Session, page: int, limit: int, name: Optional[str] = None, role: Optional[str] = None):
+    filters = {"name": name, "role": role}
+    return paginate_and_filter(
+        db=db,
+        model=User,
+        page=page,
+        limit=limit,
+        filters=filters
+    )
 
 
 def get_user_by_id_service(db: Session, user_id: str):

@@ -178,9 +178,27 @@ def get_simulations_by_input_id_service(db: Session, simulation_input_id: str):
     )
 
 
-def get_all_simulation_ids_service(db: Session):
-    """Retrieves all simulation IDs from the database."""
-    return db.query(Simulation).distinct().all()
+from typing import Optional
+from core.pagination import paginate_and_filter
+
+from modules.scenario_sim.models import SimulationInput
+
+def get_all_simulation_ids_service(db: Session, page: int = 1, limit: int = 10, status: Optional[str] = None, learning_objectives: Optional[str] = None, pitch: Optional[str] = None):
+    """Retrieves simulations using pagination and filters."""
+    query = db.query(Simulation)
+    
+    if pitch:
+        query = query.join(SimulationInput).filter(SimulationInput.pitch.ilike(f"%{pitch}%"))
+        
+    filters = {"status": status, "learning_objectives": learning_objectives}
+    return paginate_and_filter(
+        db=db,
+        model=Simulation,
+        page=page,
+        limit=limit,
+        filters=filters,
+        query=query
+    )
 
 
 def cleanup_timed_out_simulations(db: Session, timeout_minutes: int = 3):
