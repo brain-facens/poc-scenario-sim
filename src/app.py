@@ -20,6 +20,7 @@ from modules.scenario_sim.services.simulation_services import (
     process_stale_queue,
 )
 from modules.logging.middleware.request_logging_middleware import RequestLoggingMiddleware
+from modules.logging.routes.request_log_routes import logs_router
 from modules.voice_changer.routes.voice_changer_routes import voice_changer_router
 
 
@@ -77,6 +78,9 @@ app.include_router(atas_router)
 
 # Voice Changer
 app.include_router(voice_changer_router)
+
+# Logging
+app.include_router(logs_router)
 
 if __name__ == "__main__":
     uvicorn.run("app:app", reload=True, timeout_keep_alive=120)
