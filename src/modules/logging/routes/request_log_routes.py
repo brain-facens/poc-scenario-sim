@@ -8,7 +8,9 @@ from core.security import get_current_user
 from database import get_db
 from modules.auth.models.user_model import User
 from modules.logging.schemas.request_log_schemas import RequestLogRead
+from modules.logging.schemas.daily_stats_schemas import DailyStatsRead, GlobalAveragesRead
 from modules.logging.services.request_log_services import get_request_logs_service
+from modules.logging.services.daily_stats_services import get_daily_stats_list, get_global_averages
 
 logs_router = APIRouter(prefix="/logs", tags=["logs"])
 
@@ -39,3 +41,22 @@ def get_request_logs(
         error_type=error_type,
         client_ip=client_ip,
     )
+
+
+@logs_router.get("/stats/daily", response_model=list[DailyStatsRead])
+def get_daily_stats(
+    db: Session = Depends(get_db),
+    limit: int = Query(30, ge=1, le=365, description="Number of days to retrieve"),
+    current_user: User = Depends(get_current_user),
+):
+    """Retrieve daily request statistics for trends."""
+    return get_daily_stats_list(db, limit=limit)
+
+
+@logs_router.get("/stats/summary", response_model=GlobalAveragesRead)
+def get_stats_summary(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Retrieve global summary of all time stats."""
+    return get_global_averages(db)

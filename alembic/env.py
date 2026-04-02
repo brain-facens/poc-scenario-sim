@@ -29,6 +29,7 @@ from modules.gerador_atas.models.ata_model import TranscricaoModel
 
 # Logging module models
 from modules.logging.models.request_log_model import RequestLog
+from modules.logging.models.daily_stats_model import DailyStats
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

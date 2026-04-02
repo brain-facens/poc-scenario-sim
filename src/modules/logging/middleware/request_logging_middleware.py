@@ -16,6 +16,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 
 from database import SessionLocal
 from modules.logging.models.request_log_model import RequestLog
+from modules.logging.services.daily_stats_services import update_daily_stats
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -75,6 +76,10 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             try:
                 db = SessionLocal()
                 db.add(log_entry)
+
+                # --- Update daily stats ---
+                update_daily_stats(db, status_code, duration_ms, request.method)
+
                 db.commit()
             except Exception:
                 db.rollback()
