@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, Query
+from core.pagination import PaginatedResponse
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from starlette.responses import FileResponse
@@ -83,12 +84,26 @@ async def fetch_simulation_pdf(simulation_id: str, db: Session = Depends(get_db)
     )
 
 
-@simulation_router.get("/", response_model=List[SimulationFullRead])
-def list_simulations(db: Session = Depends(get_db)):
+@simulation_router.get("/", response_model=PaginatedResponse[SimulationFullRead])
+def list_simulations(
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(10, ge=1, le=100, description="Items per page"),
+    status: Optional[str] = Query(None, description="Filter by status"),
+    learning_objectives: Optional[str] = Query(None, description="Filter by learning objectives"),
+    pitch: Optional[str] = Query(None, description="Filter by pitch")
+):
     """
-    Returns a list of all simulations in the database.
+    Returns a paginated list of simulations in the database, with optional filtering.
     """
-    return get_all_simulation_ids_service(db)
+    return get_all_simulation_ids_service(
+        db, 
+        page=page, 
+        limit=limit, 
+        status=status, 
+        learning_objectives=learning_objectives, 
+        pitch=pitch
+    )
 
 
 @simulation_router.get("/{input_id}", response_model=List[SimulationFullRead])

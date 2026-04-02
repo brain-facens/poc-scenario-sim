@@ -13,6 +13,20 @@ from modules.gerador_atas.gen_engine.ata_utils import (
 )
 from modules.gerador_atas.gen_engine.docx_builder import gerar_ata_docx
 
+from typing import Optional
+from core.pagination import paginate_and_filter
+
+def get_atas_service(db: Session, page: int = 1, limit: int = 10, numero_ata: Optional[str] = None, tema: Optional[str] = None):
+    filters = {"numero_ata": numero_ata, "tema": tema}
+    return paginate_and_filter(
+        db=db,
+        model=AtaModel,
+        page=page,
+        limit=limit,
+        filters=filters,
+        default_order_by=AtaModel.created_at.desc()
+    )
+
 
 async def gerar_ata_docx_service(
     db: Session,
