@@ -15,6 +15,7 @@ from modules.scenario_sim.routes.actor_routes import actor_router
 from modules.scenario_sim.routes.material_routes import material_router
 from modules.scenario_sim.routes.scene_routes import scene_router
 from modules.scenario_sim.routes.simulation_routes import simulation_router
+from modules.scenario_sim.routes.evaluation_routes import evaluation_router
 from modules.scenario_sim.services.simulation_services import (
     cleanup_timed_out_simulations,
     process_stale_queue,
@@ -72,6 +73,7 @@ app.include_router(simulation_router)
 app.include_router(actor_router)
 app.include_router(scene_router)
 app.include_router(material_router)
+app.include_router(evaluation_router)
 
 # Gerador de ATAs
 app.include_router(atas_router)
