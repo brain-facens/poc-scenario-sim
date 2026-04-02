@@ -287,7 +287,7 @@ def build_scenario_document_xml(scenario: Scenario):
     # Learning Objectives
     table_content = []
     table_content.append(["Objetivos de Aprendizagem:", ""])
-    table_content.append(["", scenario.learning_objectives])
+    table_content.append([scenario.learning_objectives, ""])
 
     if table_content:
         table_xml = build_table_xml(
