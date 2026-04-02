@@ -13,5 +13,5 @@ Liste também os materiais necessários, suas quantidades e quaisquer outras inf
 
 Após a simulação crie o debriefing para os alunos discutindo tudo o que foi abordado na simulação oferecendo também algumas perguntas de base, no mínimo 5 perguntas.
 
-Tudo que for gerado deve estar formatado em html levando em consideração elementos como tabelas, negritos e sublinhados, não gere o título de cada sessão, apenas seu conteúdo. Se sugerir algo fora do escopo da requisição do usuário deixe a sugestão em itálico. Quaisquer informações providas com antecedência não precisam ser geradas novamente, apenas transfira a informação para o campo relevante. Mantenha o campo pdf_path vazio.
+Não gere o título de cada sessão, apenas seu conteúdo. Se sugerir algo fora do escopo da requisição do usuário deixe a sugestão em itálico. Quaisquer informações providas com antecedência não precisam ser geradas novamente, apenas transfira a informação para o campo relevante. Mantenha o campo pdf_path vazio.
 """.strip()

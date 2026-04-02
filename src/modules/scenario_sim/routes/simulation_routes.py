@@ -42,9 +42,7 @@ async def create_simulation_input(
 
 @simulation_router.post("/{simulation_id}/pdf")
 async def trigger_pdf_generation(
-    simulation_id: str,
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
+    simulation_id: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
 ):
     """
     Triggers the generation of a new PDF for a specific simulation in the background.
@@ -55,8 +53,7 @@ async def trigger_pdf_generation(
 
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Simulation not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Simulation not found"
         )
 
     return {"message": "PDF generation started"}
@@ -70,18 +67,19 @@ async def fetch_simulation_pdf(simulation_id: str, db: Session = Depends(get_db)
     simulation = get_simulation_by_id_service(db, simulation_id=simulation_id)
     if not simulation or not simulation.pdf_path:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="PDF not found for this simulation"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="PDF not found for this simulation",
         )
 
     return FileResponse(
         path=str(simulation.pdf_path),
-        filename=f"simulation_{simulation_id}.pdf",
-        media_type="application/pdf",
+        filename=f"simulation_{simulation_id}.docx",
+        media_type="multipart/form-data",
         headers={
             "Cache-Control": "no-cache, no-store, must-revalidate",
             "Pragma": "no-cache",
-            "Expires": "0"
-        }
+            "Expires": "0",
+        },
     )
 
 

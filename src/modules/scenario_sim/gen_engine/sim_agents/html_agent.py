@@ -11,14 +11,11 @@ local_client: AsyncOpenAI = AsyncOpenAI(
 )
 
 model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
-    model="qwen3.5:9b", openai_client=local_client
+    model="qwen3.5:latest", openai_client=local_client
 )
 
 html_agent: Agent = Agent[Scenario](
     name="Actor Briefing",
     instructions=html_prompt,
-    tools=[
-        # FileSearchTool(vector_store_ids=[os.getenv("VECTOR_STORE")], max_num_results=1),
-    ],
-    model="gpt-5-mini",
+    model=model,  # "gpt-5-mini"
 )

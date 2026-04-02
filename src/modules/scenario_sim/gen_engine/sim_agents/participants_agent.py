@@ -11,12 +11,12 @@ local_client: AsyncOpenAI = AsyncOpenAI(
 )
 
 model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
-    model="qwen3.5:9b", openai_client=local_client
+    model="qwen3.5:latest", openai_client=local_client
 )
 
 participants_agent: Agent = Agent(
     name="Participants planner",
     instructions=participants_prompt,
     output_type=Participants,
-    model="gpt-5-mini",
+    model=model,
 )

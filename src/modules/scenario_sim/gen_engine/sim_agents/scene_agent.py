@@ -16,5 +16,5 @@ scene_agent: Agent = Agent(
     name="Scene Writer",
     instructions=scene_prompt,
     output_type=Scene,
-    model="gpt-5-mini",
+    model=model,
 )

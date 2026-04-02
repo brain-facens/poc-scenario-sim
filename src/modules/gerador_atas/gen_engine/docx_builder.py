@@ -32,7 +32,15 @@ NS = (
 )
 
 
-def p(text, bold=False, center=False, size=24, underline=False, justify=True, first_line_indent=False):
+def p(
+    text,
+    bold=False,
+    center=False,
+    size=24,
+    underline=False,
+    justify=True,
+    first_line_indent=False,
+):
     jc = "center" if center else ("both" if justify else "left")
     u = '<w:u w:val="single"/>' if underline else ""
     b = "<w:b/><w:bCs/>" if bold else ""
@@ -55,7 +63,7 @@ def p(text, bold=False, center=False, size=24, underline=False, justify=True, fi
         f'<w:lang w:val="pt-BR"/></w:rPr>'
     )
     return (
-        f'<w:p>{ppr}<w:r>{rpr}'
+        f"<w:p>{ppr}<w:r>{rpr}"
         f'<w:t xml:space="preserve">{escape(text)}</w:t></w:r></w:p>'
     )
 
@@ -67,7 +75,7 @@ def p_bullet(text):
         '<w:sz w:val="24"/><w:szCs w:val="24"/><w:lang w:val="pt-BR"/></w:rPr>'
     )
     return (
-        f'<w:p>'
+        f"<w:p>"
         f'<w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="2"/></w:numPr>'
         f'<w:spacing w:line="360" w:lineRule="auto"/><w:jc w:val="both"/>{rpr}</w:pPr>'
         f'<w:r>{rpr}<w:t xml:space="preserve">{escape(text)}</w:t></w:r></w:p>'
@@ -94,7 +102,7 @@ def p_item_topico(texto):
         '<w:sz w:val="24"/><w:szCs w:val="24"/><w:lang w:val="pt-BR"/></w:rPr>'
     )
     return (
-        f'<w:p><w:pPr>'
+        f"<w:p><w:pPr>"
         f'<w:ind w:left="720" w:hanging="360"/>'
         f'<w:spacing w:line="360" w:lineRule="auto"/>'
         f'<w:jc w:val="both"/>{rpr}</w:pPr>'
@@ -109,7 +117,7 @@ def p_deliberacao(texto):
         '<w:sz w:val="24"/><w:szCs w:val="24"/><w:lang w:val="pt-BR"/></w:rPr>'
     )
     return (
-        f'<w:p><w:pPr>'
+        f"<w:p><w:pPr>"
         f'<w:ind w:left="720" w:hanging="360"/>'
         f'<w:spacing w:line="360" w:lineRule="auto"/>'
         f'<w:jc w:val="both"/>{rpr}</w:pPr>'
@@ -132,25 +140,25 @@ def p_assinatura_tabela(participantes):
     def tcpr():
         return (
             f'<w:tcPr><w:tcW w:w="{COL_W}" w:type="dxa"/>'
-            '<w:tcBorders>'
+            "<w:tcBorders>"
             '<w:top w:val="none"/><w:left w:val="none"/>'
             '<w:bottom w:val="none"/><w:right w:val="none"/>'
-            '</w:tcBorders>'
-            '<w:tcMar>'
+            "</w:tcBorders>"
+            "<w:tcMar>"
             '<w:top w:w="200" w:type="dxa"/><w:bottom w:w="400" w:type="dxa"/>'
             '<w:left w:w="200" w:type="dxa"/><w:right w:w="200" w:type="dxa"/>'
-            '</w:tcMar></w:tcPr>'
+            "</w:tcMar></w:tcPr>"
         )
 
     def celula(nome):
         rp = rpr_cell()
         linha_p = (
             f'<w:p><w:pPr><w:jc w:val="center"/>{rp}</w:pPr>'
-            f'<w:r>{rp}<w:t>{escape(LINHA)}</w:t></w:r></w:p>'
+            f"<w:r>{rp}<w:t>{escape(LINHA)}</w:t></w:r></w:p>"
         )
         nome_p = (
             f'<w:p><w:pPr><w:jc w:val="center"/>{rp}</w:pPr>'
-            f'<w:r>{rp}<w:t>{escape(nome)}</w:t></w:r></w:p>'
+            f"<w:r>{rp}<w:t>{escape(nome)}</w:t></w:r></w:p>"
         )
         return f"<w:tc>{tcpr()}{linha_p}{nome_p}</w:tc>"
 
@@ -170,25 +178,33 @@ def p_assinatura_tabela(participantes):
         rows += f"<w:tr>{c_esq}{c_dir}</w:tr>"
 
     return (
-        f'<w:tbl>'
-        f'<w:tblPr>'
+        f"<w:tbl>"
+        f"<w:tblPr>"
         f'<w:tblW w:w="{TABLE_W}" w:type="dxa"/>'
         f'<w:jc w:val="center"/>'
-        f'<w:tblBorders>'
+        f"<w:tblBorders>"
         f'<w:top w:val="none"/><w:left w:val="none"/>'
         f'<w:bottom w:val="none"/><w:right w:val="none"/>'
         f'<w:insideH w:val="none"/><w:insideV w:val="none"/>'
-        f'</w:tblBorders></w:tblPr>'
-        f'<w:tblGrid>'
+        f"</w:tblBorders></w:tblPr>"
+        f"<w:tblGrid>"
         f'<w:gridCol w:w="{COL_W}"/><w:gridCol w:w="{COL_W}"/>'
-        f'</w:tblGrid>'
-        f'{rows}</w:tbl>'
+        f"</w:tblGrid>"
+        f"{rows}</w:tbl>"
     )
 
 
 def build_document_xml(
-    numero_ata, orgao, tema, introducao, topicos, deliberacoes,
-    condutor="", secretario="", hora_fim="", minutos_fim="",
+    numero_ata,
+    orgao,
+    tema,
+    introducao,
+    topicos,
+    deliberacoes,
+    condutor="",
+    secretario="",
+    hora_fim="",
+    minutos_fim="",
     participantes=None,
 ):
     pars = []
@@ -213,13 +229,19 @@ def build_document_xml(
 
     # Tópicos
     pars.append(p(""))
-    pars.append(p("Durante a reunião, foram discutidos os seguintes assuntos:", bold=True, justify=True))
+    pars.append(
+        p(
+            "Durante a reunião, foram discutidos os seguintes assuntos:",
+            bold=True,
+            justify=True,
+        )
+    )
     pars.append(p(""))
     for t in topicos:
         t = t.strip()
-        if re.match(r'^[IVX]+\.', t):
+        if re.match(r"^[IVX]+\.", t):
             pars.append(p_subtitulo_topico(t))
-        elif re.match(r'^[a-z]\)', t):
+        elif re.match(r"^[a-z]\)", t):
             pars.append(p_item_topico(t))
             pars.append(p(""))
         else:
@@ -227,10 +249,16 @@ def build_document_xml(
     pars.append(p(""))
 
     # Deliberações
-    pars.append(p("Ficaram deliberadas as seguintes ações e encaminhamentos:", bold=True, justify=True))
+    pars.append(
+        p(
+            "Ficaram deliberadas as seguintes ações e encaminhamentos:",
+            bold=True,
+            justify=True,
+        )
+    )
     pars.append(p(""))
     for i, d in enumerate(deliberacoes, 1):
-        d_limpo = re.sub(r'^\d+\.\s*', '', d.strip())
+        d_limpo = re.sub(r"^\d+\.\s*", "", d.strip())
         pars.append(p_deliberacao(f"{i}. {d_limpo}"))
         pars.append(p(""))
     pars.append(p(""))
@@ -266,8 +294,16 @@ def build_document_xml(
 
 
 def gerar_ata_docx(
-    numero_ata, orgao, tema, introducao, topicos, deliberacoes,
-    condutor="", secretario="", hora_fim="", minutos_fim="",
+    numero_ata,
+    orgao,
+    tema,
+    introducao,
+    topicos,
+    deliberacoes,
+    condutor="",
+    secretario="",
+    hora_fim="",
+    minutos_fim="",
     participantes=None,
 ) -> bytes:
     """
@@ -276,9 +312,16 @@ def gerar_ata_docx(
     Uses the ATA_teste.docx template stored in assets/.
     """
     novo_xml = build_document_xml(
-        numero_ata, orgao, tema, introducao, topicos, deliberacoes,
-        condutor=condutor, secretario=secretario,
-        hora_fim=hora_fim, minutos_fim=minutos_fim,
+        numero_ata,
+        orgao,
+        tema,
+        introducao,
+        topicos,
+        deliberacoes,
+        condutor=condutor,
+        secretario=secretario,
+        hora_fim=hora_fim,
+        minutos_fim=minutos_fim,
         participantes=participantes,
     )
 
