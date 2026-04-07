@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.concurrency import run_in_threadpool
 from fastapi_utilities import repeat_every
 
 from database import SessionLocal
@@ -23,6 +24,7 @@ from modules.scenario_sim.services.simulation_services import (
 from modules.logging.middleware.request_logging_middleware import RequestLoggingMiddleware
 from modules.logging.routes.request_log_routes import logs_router
 from modules.voice_changer.routes.voice_changer_routes import voice_changer_router
+from modules.voice_changer.services.voice_changer_services import check_health
 
 
 @repeat_every(seconds=1500)
@@ -43,9 +45,20 @@ async def simulation_watchdog():
         db.close()
 
 
+@repeat_every(seconds=870)
+async def keep_voice_changer_alive():
+    """Pings the Voice Changer API to prevent it from sleeping on Render."""
+    try:
+        result = await run_in_threadpool(check_health)
+        print(f"Voice Changer ping successful: {result}")
+    except Exception as e:
+        print(f"Voice Changer ping failed: {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await simulation_watchdog()
+    await keep_voice_changer_alive()
     yield
 
 
