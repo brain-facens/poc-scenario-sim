@@ -214,3 +214,4 @@ src/scenarios/
 src/*.json
 src/src/
 /src/pdf_exports/*.docx
+*jsonl
