@@ -9,7 +9,6 @@ import os
 import time
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
 from pathlib import Path
 
 from dotenv import find_dotenv, load_dotenv
@@ -237,7 +236,7 @@ async def gerar_deliberacoes(transcricao: str, dados_manuais: str) -> str:
     result = await _completion(
         cfg=_CFG, fallback=_FALLBACK,
         messages=[{"role": "user", "content": PROMPT_DELIBERACOES.format(
-            transcciricao=transcricao, dados_manuais=dados_manuais,
+            transcricao=transcricao, dados_manuais=dados_manuais,
         )}],
         reasoning=True, agent_name="Deliberações",
     )
