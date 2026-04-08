@@ -109,7 +109,7 @@ Retorne apenas a transcrição corrigida, em texto puro, sem aspas, sem markdown
 PROMPT_INTRODUCAO = PromptTemplate.from_template("""
 Você é um redator especializado em atas institucionais em português brasileiro, com foco em precisão factual, objetividade e aderência rigorosa ao formato solicitado.
 
-Sua tarefa é gerar exclusivamente o parágrafo introdutório de uma ata de reunião com base nos dados manuais e na transcrição corrigida.
+Sua tarefa é gerar exclusivamente o parágrafo introdutório de uma ata de reunião com base nos dados manuais e na transcrição de referência.
 
 ## OBJETIVO
 Produzir uma introdução formal, clara e específica, sem generalizações, sem inferências indevidas e sem conteúdo não comprovado.
@@ -129,24 +129,14 @@ Se houver dúvida entre completar e omitir, omita.
    - participantes;
    - ausentes;
    - nomes e identificação formal.
-2. A transcrição corrigida é a fonte autoritativa para:
+2. A transcrição de referência é a fonte autoritativa para:
    - tema principal da reunião;
    - objeto central da pauta;
    - formulação do resumo da pauta.
 
-## DADOS MANUAIS
-<DADOS_MANUAIS_INICIO>
-{dados_manuais}
-<DADOS_MANUAIS_FIM>
-
-## TRANSCRIÇÃO CORRIGIDA
-<TRANSCRICAO_INICIO>
-{transcricao}
-<TRANSCRICAO_FIM>
-
 ## REGRAS DE EXTRAÇÃO
 
-1. Extraia o tema principal da reunião a partir da transcrição corrigida.
+1. Extraia o tema principal da reunião a partir da transcrição de referência.
 2. O tema deve nomear o eixo central e mais recorrente da reunião, em formulação curta, objetiva e institucional.
 3. Não construa o tema como lista de assuntos concatenados com "e" ou vírgulas.
 4. Se a reunião tiver múltiplos assuntos sem um eixo único dominante, escolha o eixo mais preponderante ou uma síntese conceitualmente coesa.
@@ -217,7 +207,7 @@ A reunião teve como pauta principal [resumo específico da pauta], sendo conduz
 PROMPT_TOPICOS = PromptTemplate.from_template("""
 Você é um redator especializado em atas institucionais em português brasileiro.
 
-Sua tarefa é identificar e organizar os principais tópicos efetivamente discutidos na reunião com base na transcrição corrigida e nos dados manuais.
+Sua tarefa é identificar e organizar os principais tópicos efetivamente discutidos na reunião com base na transcrição de referência e nos dados manuais.
 
 ## OBJETIVO
 Gerar a seção "Pontos discutidos" de forma clara, fiel e útil para compreender a reunião, preservando os assuntos relevantes que foram debatidos, inclusive quando não resultarem em deliberação formal.
@@ -238,24 +228,14 @@ Não transforme detalhes ilustrativos, exemplos pontuais de ferramenta, hardware
    - nomes corretos;
    - identificação formal;
    - siglas e termos institucionais.
-2. A transcrição corrigida é a fonte autoritativa para:
+2. A transcrição de referência é a fonte autoritativa para:
    - conteúdo discutido;
    - ordem dos assuntos;
    - contexto dos debates.
 3. Para nomes próprios e identidade de falantes, considere como mais confiáveis:
    - nomes explícitos nos dados manuais;
-   - nomes explícitos na transcrição corrigida;
-   - anotações de falante que tenham sido preservadas ou adicionadas de forma conservadora na própria transcrição corrigida.
-
-## DADOS MANUAIS
-<DADOS_MANUAIS_INICIO>
-{dados_manuais}
-<DADOS_MANUAIS_FIM>
-
-## TRANSCRIÇÃO CORRIGIDA
-<TRANSCRICAO_INICIO>
-{transcricao}
-<TRANSCRICAO_FIM>
+   - nomes explícitos na transcrição de referência;
+   - anotações de falante que tenham sido preservadas na própria transcrição de referência.
 
 ## REGRAS GERAIS
 
@@ -300,8 +280,8 @@ Não transforme detalhes ilustrativos, exemplos pontuais de ferramenta, hardware
 ## REGRAS SOBRE NOMES E RESPONSÁVEIS NOS TÓPICOS
 
 28. Em tópicos, o nome da pessoa só deve aparecer quando:
-   - ela estiver explicitamente nomeada na transcrição corrigida; ou
-   - sua identidade estiver claramente estabilizada pela correção conservadora do texto.
+   - ela estiver explicitamente nomeada na transcrição de referência; ou
+   - sua identidade estiver claramente estabilizada pela transcrição de referência.
 29. Não promova pronome, turno implícito ou contexto genérico a nome próprio.
 30. Se houver dúvida sobre qual pessoa estava associada a um ponto, descreva o conteúdo discutido sem atribuição nominal.
 31. Nunca troque nomes parecidos por aproximação fonética.
@@ -363,7 +343,7 @@ a) [Descrição objetiva do ponto discutido.]
 PROMPT_DELIBERACOES = PromptTemplate.from_template("""
 Você é um redator especializado em atas institucionais em português brasileiro.
 
-Sua tarefa é identificar as deliberações, encaminhamentos, pendências e próximos passos efetivamente estabelecidos na reunião com base na transcrição corrigida e nos dados manuais.
+Sua tarefa é identificar as deliberações, encaminhamentos, pendências e próximos passos efetivamente estabelecidos na reunião com base na transcrição de referência e nos dados manuais.
 
 ## OBJETIVO
 Gerar a seção de deliberações de forma fiel e útil, registrando apenas ações futuras realmente sustentadas pela transcrição.
@@ -381,22 +361,12 @@ Quando houver ação futura clara, mas houver dúvida sobre o responsável nomin
    - nomes corretos;
    - cargos;
    - identificação formal.
-2. A transcrição corrigida é a fonte autoritativa para:
+2. A transcrição de referência é a fonte autoritativa para:
    - existência da deliberação;
    - conteúdo da ação;
    - prazo;
    - responsável, quando explicitado com segurança;
    - contexto.
-
-## DADOS MANUAIS
-<DADOS_MANUAIS_INICIO>
-{dados_manuais}
-<DADOS_MANUAIS_FIM>
-
-## TRANSCRIÇÃO CORRIGIDA
-<TRANSCRICAO_INICIO>
-{transcricao}
-<TRANSCRICAO_FIM>
 
 ## O QUE PODE SER CONSIDERADO DELIBERAÇÃO
 
@@ -423,13 +393,13 @@ Não considere como deliberação:
 
 ## REGRAS CRÍTICAS DE RESPONSÁVEL E ATRIBUIÇÃO
 
-1. Só mencione o nome do responsável quando ele estiver explícito no próprio trecho ou puder ser recuperado com segurança da transcrição corrigida.
+1. Só mencione o nome do responsável quando ele estiver explícito no próprio trecho ou puder ser recuperado com segurança da transcrição de referência.
 2. Não atribua ação a alguém apenas porque:
    - essa pessoa falou antes;
    - essa pessoa falou depois;
    - essa pessoa costuma liderar a reunião;
    - o nome dela aparece no contexto geral.
-3. Se o trecho trouxer "eu faço", "deixa comigo", "eu gero", "eu envio" e o falante não estiver identificado com segurança na transcrição corrigida, escreva a ação sem nomear o responsável.
+3. Se o trecho trouxer "eu faço", "deixa comigo", "eu gero", "eu envio" e o falante não estiver identificado com segurança na transcrição de referência, escreva a ação sem nomear o responsável.
 4. Nunca transfira ações entre participantes de nomes parecidos ou que estejam no mesmo eixo de trabalho.
 5. Não transforme status report em deliberação automática.
 6. Continuidade de tarefa em andamento só vira deliberação quando a fala deixar claro que a atividade deve prosseguir, ser retomada, ser entregue, testada, ajustada ou validada.

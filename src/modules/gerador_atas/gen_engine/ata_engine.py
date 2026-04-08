@@ -131,7 +131,7 @@ async def _completion(
 
     # reasoning_effort é exclusivo da OpenAI — não enviar para Ollama
     if reasoning and cfg.name == "OpenAI":
-        kwargs["reasoning_effort"] = "low"
+        kwargs["reasoning_effort"] = "high"
 
     prompt_text = "\n\n".join(
         f"[{m.get('role', 'user')}]\n{m.get('content', '')}" for m in messages
@@ -201,7 +201,8 @@ def _build_messages_for_caching(transcricao: str, dados_manuais: str, prompt_tem
     """
     system_prefix = (
         f"## DADOS MANUAIS\n<DADOS_MANUAIS_INICIO>\n{dados_manuais}\n<DADOS_MANUAIS_FIM>\n\n"
-        f"## TRANSCRIÇÃO DE REFERÊNCIA\n<TRANSCRICAO_INICIO>\n{transcricao}\n<TRANSCRICAO_FIM>"
+        f"## TRANSCRIÇÃO DE REFERÊNCIA\n<TRANSCRICAO_INICIO>\n{transcricao}\n<TRANSCRICAO_FIM>\n\n"
+        f"IMPORTANTE: Utilize os DADOS MANUAIS para aplicar correções tácitas em nomes de pessoas, cargos ou jargões encontrados na transcrição."
     )
     
     # Remove as marcações vazias do template do user p/ focar só nas regras
@@ -211,16 +212,6 @@ def _build_messages_for_caching(transcricao: str, dados_manuais: str, prompt_tem
         {"role": "system", "content": system_prefix},
         {"role": "user", "content": user_prompt}
     ]
-
-async def corrigir_transcricao(transcricao: str, dados_manuais: str) -> str:
-    logger.info("[Corretor] Enviando (%d chars)…", len(transcricao))
-    result = await _completion(
-        cfg=_CFG, fallback=_FALLBACK,
-        messages=_build_messages_for_caching(transcricao, dados_manuais, PROMPT_CORRETOR),
-        reasoning=False, agent_name="Corretor",
-    )
-    logger.info("[Corretor] Concluído (%d chars).", len(result))
-    return result
 
 
 async def gerar_introducao(transcricao: str, dados_manuais: str) -> str:
@@ -256,39 +247,6 @@ async def gerar_deliberacoes(transcricao: str, dados_manuais: str) -> str:
     return result
 
 
-async def validar_ata(
-    transcricao_corrigida: str,
-    dados_manuais: str,
-    participantes: list[str],
-    topicos: list[str],
-    deliberacoes: list[str],
-) -> dict:
-    logger.info("[Validador] Validando ATA…")
-    
-    # Para o validador, os kwargs adicionais incluem os dados pré-gerados
-    messages = _build_messages_for_caching(
-        transcricao_corrigida,
-        dados_manuais,
-        PROMPT_VALIDADOR,
-        participantes=", ".join(participantes),
-        topicos="\n".join(f"- {t}" for t in topicos),
-        deliberacoes="\n".join(f"- {d}" for d in deliberacoes)
-    )
-
-    raw = await _completion(
-        cfg=_CFG, fallback=_FALLBACK,
-        messages=messages,
-        reasoning=True, agent_name="Validador",
-    )
-    try:
-        resultado = json.loads(raw.replace("```json", "").replace("```", "").strip())
-    except (json.JSONDecodeError, TypeError, ValueError):
-        logger.warning("[Validador] JSON inválido — usando dados originais.")
-        resultado = {"participantes": participantes, "topicos": topicos, "deliberacoes": deliberacoes}
-
-    logger.info("[Validador] Concluído.")
-    return resultado
-
 
 # ---------------------------------------------------------------------------
 # Pipeline principal
@@ -312,12 +270,10 @@ async def estruturar_ata(transcricao: str, dados_manuais: dict) -> dict:
     if chars < MIN_TRANSCRICAO_CHARS:
         return {"ok": False, "erro": "Erro: Gravação muito curta ou erro durante a gravação"}
 
-    # ── 2. Correção ──────────────────────────────────────────────────────────
-    t0 = time.time()
-    transcricao_corrigida = await corrigir_transcricao(transcricao, dados_str)
-    logger.info("⏱ Correção: %.1fs", time.time() - t0)
+    # O "Corretor" foi abolido da barreira síncrona: os agentes recebem a transcrição RAW
+    # e farão as correções tacitamente baseadas nos DADOS_MANUAIS enviados.
 
-    # ── 3. Agentes Especialistas ─────────────────────────────────────────────
+    # ── 2. Agentes Especialistas ─────────────────────────────────────────────
     # Otimização dinâmica:
     # Se backend for OpenAI, as consultas vão em paralelo (Prompt Caching garantirá desconto de tokens)
     # Se backend for Local/Ollama, executa sequencial para reuso pleno do KV Cache sem estourar VRAM
@@ -325,15 +281,15 @@ async def estruturar_ata(transcricao: str, dados_manuais: dict) -> dict:
     
     if _CFG.name == "Local (Ollama)":
         logger.info("Executando especialistas em CASCATA (KV Cache na VRAM local)...")
-        introducao_raw = await gerar_introducao(transcricao_corrigida, dados_str)
-        topicos_raw = await gerar_topicos(transcricao_corrigida, dados_str)
-        deliberacoes_raw = await gerar_deliberacoes(transcricao_corrigida, dados_str)
+        introducao_raw = await gerar_introducao(transcricao, dados_str)
+        topicos_raw = await gerar_topicos(transcricao, dados_str)
+        deliberacoes_raw = await gerar_deliberacoes(transcricao, dados_str)
     else:
         logger.info("Executando especialistas em PARALELO (OpenAI Prompt Caching API)...")
         introducao_raw, topicos_raw, deliberacoes_raw = await asyncio.gather(
-            gerar_introducao(transcricao_corrigida, dados_str),
-            gerar_topicos(transcricao_corrigida, dados_str),
-            gerar_deliberacoes(transcricao_corrigida, dados_str),
+            gerar_introducao(transcricao, dados_str),
+            gerar_topicos(transcricao, dados_str),
+            gerar_deliberacoes(transcricao, dados_str),
         )
         
     logger.info("⏱ Finalizados: %.1fs", time.time() - t0)
@@ -350,30 +306,24 @@ async def estruturar_ata(transcricao: str, dados_manuais: dict) -> dict:
     topicos_list      = [t.strip("•-– ").strip() for t in topicos_raw.splitlines()      if t.strip()]
     deliberacoes_list = [d.strip("•-– ").strip() for d in deliberacoes_raw.splitlines() if d.strip()]
 
+    import re
     participantes_raw = dados_manuais.get("participantes", "")
-    participantes_list = (
-        participantes_raw if isinstance(participantes_raw, list)
-        else [p.strip() for p in participantes_raw.split(",") if p.strip()]
-    )
+    if isinstance(participantes_raw, list):
+        participantes_list = participantes_raw
+    else:
+        # Divide por vírgula ou por " e " isolado
+        participantes_list = [p.strip() for p in re.split(r',|\s+e\s+', participantes_raw) if p.strip()]
 
-    # ── 4. Validação da ATA ──────────────────────────────────────────────────
-    t0 = time.time()
-    validado = await validar_ata(
-        transcricao_corrigida=transcricao_corrigida,
-        dados_manuais=dados_str,
-        participantes=participantes_list,
-        topicos=topicos_list,
-        deliberacoes=deliberacoes_list,
-    )
-    logger.info("⏱ Validação: %.1fs", time.time() - t0)
-    logger.info("✅ Pipeline concluído | TOTAL: %.1fs", time.time() - inicio_total)
+    # O "Validador" JSON foi abolido da barreira final.
+    # O DOCX builder já espera e opera em cima de List[str] estruturada.
+    logger.info("✅ Pipeline concluído (Direct Stream) | TOTAL: %.1fs", time.time() - inicio_total)
 
     return {
         "ok": True,
         "tema": tema,
         "resumo": "\n".join(introducao_partes),
-        "assuntos_discutidos": validado["topicos"],
-        "deliberacoes": validado["deliberacoes"],
-        "participantes": validado["participantes"],
+        "assuntos_discutidos": topicos_list,
+        "deliberacoes": deliberacoes_list,
+        "participantes": participantes_list,
         "ausentes": dados_manuais.get("ausentes", ""),
     }

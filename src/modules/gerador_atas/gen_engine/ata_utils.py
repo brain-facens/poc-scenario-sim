@@ -182,6 +182,10 @@ def normalizar_lista_participantes(raw: str) -> list[str]:
         >>> normalizar_lista_participantes("joão da silva\\nmaria dos santos")
         ['João da Silva', 'Maria dos Santos']
     """
-    separador = "\n" if "\n" in raw else ","
-    itens = [i.strip() for i in raw.split(separador) if i.strip()]
+    import re
+    if "\n" in raw:
+        itens = [i.strip() for i in raw.split("\n") if i.strip()]
+    else:
+        itens = [i.strip() for i in re.split(r',|\s+e\s+', raw) if i.strip()]
+        
     return [normalizar_participante(i) for i in itens]
