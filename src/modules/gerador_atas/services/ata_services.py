@@ -153,7 +153,7 @@ async def transcrever_audio_service(db: Session, audio_bytes: bytes, suffix: str
         if transcribe_backend == "openai":
             transcricao, elapsed = await transcribe_api(tmp_path)
         else:
-            transcricao, elapsed = transcribeX(tmp_path)
+            transcricao, elapsed = await transcribeX(tmp_path)
     finally:
         os.remove(tmp_path)
 
