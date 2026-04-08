@@ -131,7 +131,7 @@ async def _completion(
 
     # reasoning_effort é exclusivo da OpenAI — não enviar para Ollama
     if reasoning and cfg.name == "OpenAI":
-        kwargs["reasoning_effort"] = "high"
+        kwargs["reasoning_effort"] = "low"
 
     prompt_text = "\n\n".join(
         f"[{m.get('role', 'user')}]\n{m.get('content', '')}" for m in messages
