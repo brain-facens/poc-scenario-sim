@@ -3,7 +3,6 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.concurrency import run_in_threadpool
 from fastapi_utilities import repeat_every
 
 from database import SessionLocal
@@ -16,18 +15,14 @@ from modules.scenario_sim.routes.actor_routes import actor_router
 from modules.scenario_sim.routes.material_routes import material_router
 from modules.scenario_sim.routes.scene_routes import scene_router
 from modules.scenario_sim.routes.simulation_routes import simulation_router
-from modules.scenario_sim.routes.evaluation_routes import evaluation_router
 from modules.scenario_sim.services.simulation_services import (
     cleanup_timed_out_simulations,
     process_stale_queue,
 )
-from modules.logging.middleware.request_logging_middleware import RequestLoggingMiddleware
-from modules.logging.routes.request_log_routes import logs_router
 from modules.voice_changer.routes.voice_changer_routes import voice_changer_router
-from modules.voice_changer.services.voice_changer_services import check_health
 
 
-@repeat_every(seconds=3000)
+@repeat_every(seconds=1500)
 async def simulation_watchdog():
     print("DEBUG: Watchdog cycle started...")
     """Periodically checks for timeouts and processes the queue."""
@@ -45,27 +40,13 @@ async def simulation_watchdog():
         db.close()
 
 
-@repeat_every(seconds=870)
-async def keep_voice_changer_alive():
-    """Pings the Voice Changer API to prevent it from sleeping on Render."""
-    try:
-        result = await run_in_threadpool(check_health)
-        print(f"Voice Changer ping successful: {result}")
-    except Exception as e:
-        print(f"Voice Changer ping failed: {e}")
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await simulation_watchdog()
-    await keep_voice_changer_alive()
     yield
 
 
 app = FastAPI(title="Brain Hub API", lifespan=lifespan)
-
-# --- Middleware (order matters: last added = outermost) ---
-app.add_middleware(RequestLoggingMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -86,7 +67,6 @@ app.include_router(simulation_router)
 app.include_router(actor_router)
 app.include_router(scene_router)
 app.include_router(material_router)
-app.include_router(evaluation_router)
 
 # Gerador de ATAs
 app.include_router(atas_router)
@@ -94,8 +74,5 @@ app.include_router(atas_router)
 # Voice Changer
 app.include_router(voice_changer_router)
 
-# Logging
-app.include_router(logs_router)
-
 if __name__ == "__main__":
-    uvicorn.run("app:app", reload=True, timeout_keep_alive=86400)
+    uvicorn.run("app:app", reload=True, timeout_keep_alive=120)
