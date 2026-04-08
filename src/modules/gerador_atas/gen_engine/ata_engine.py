@@ -51,38 +51,6 @@ class BackendConfig:
     name:        str
 
 
-<<<<<<< Updated upstream
-def _build_backends() -> tuple[BackendConfig, BackendConfig]:
-    """Constrói as configurações de OpenAI e local."""
-
-    openai_config = BackendConfig(
-        client=AsyncOpenAI(api_key=os.getenv("OPENAI_KEY")),
-        model_large="gpt-4.1-mini",
-        model_small="gpt-5-mini",   # ← ajuste para o4-mini / gpt-4o-mini se quiser
-        name="OpenAI",
-    )
-
-    local_config = BackendConfig(
-        client=AsyncOpenAI(
-        base_url="http://localhost:11434/v1/",
-        api_key="ollama",  
-    ),
-        model_large="qwen3.5:9b",
-        model_small="qwen3.5:9b",
-        name="Local (Ollama)",
-    )
-
-    return openai_config, local_config
-
-
-BACKEND_OPENAI, BACKEND_LOCAL = _build_backends()
-
-# Erros que indicam que a cota/credencial OpenAI está indisponível
-_QUOTA_ERRORS = (
-    "insufficient_quota",
-    "quota_exceeded",
-    "billing_hard_limit_reached",
-=======
 BACKEND_OPENAI = BackendConfig(
     client=AsyncOpenAI(
         api_key=os.getenv("OPENAI_KEY"),
@@ -92,7 +60,6 @@ BACKEND_OPENAI = BackendConfig(
     model_large="gpt-4.1-mini",
     model_small="gpt-5.4-nano",
     name="OpenAI",
->>>>>>> Stashed changes
 )
 
 BACKEND_LOCAL = BackendConfig(

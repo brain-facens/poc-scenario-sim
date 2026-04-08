@@ -15,9 +15,9 @@ from modules.gerador_atas.gen_engine.ata_utils import (
 from modules.gerador_atas.gen_engine.docx_builder import gerar_ata_docx
 from modules.gerador_atas.models.ata_model import AtaModel, TranscricaoModel
 
-<<<<<<< Updated upstream
 from typing import Optional
 from core.pagination import paginate_and_filter
+_ = load_dotenv(dotenv_path=find_dotenv())
 
 def get_atas_service(db: Session, page: int = 1, limit: int = 10, numero_ata: Optional[str] = None, tema: Optional[str] = None):
     filters = {"numero_ata": numero_ata, "tema": tema}
@@ -30,9 +30,6 @@ def get_atas_service(db: Session, page: int = 1, limit: int = 10, numero_ata: Op
         default_order_by=AtaModel.created_at.desc()
     )
 
-=======
-_ = load_dotenv(dotenv_path=find_dotenv())
->>>>>>> Stashed changes
 
 async def gerar_ata_docx_service(
     db: Session,
