@@ -80,11 +80,11 @@ def _build_backends() -> tuple[BackendConfig, BackendConfig]:
 
     local_config = BackendConfig(
         client=AsyncOpenAI(
-        base_url="http://172.16.51.162:11434/v1/",
+        base_url="http://localhost:11434/v1/",
         api_key="ollama",  
     ),
-        model_large="qwen3.5:latest",
-        model_small="qwen3.5:latest",
+        model_large="qwen3.5:9b",
+        model_small="qwen3.5:9b",
         name="Local (Ollama)",
     )
 

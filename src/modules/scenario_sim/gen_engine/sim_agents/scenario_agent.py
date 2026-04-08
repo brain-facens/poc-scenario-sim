@@ -10,7 +10,7 @@ from modules.scenario_sim.gen_engine.sim_agents.participants_agent import (
 from modules.scenario_sim.gen_engine.sim_agents.scene_agent import scene_agent
 
 local_client: AsyncOpenAI = AsyncOpenAI(
-    base_url="http://172.16.51.162:11434/v1", api_key="sk_123"
+    base_url="http://localhost:11434/v1", api_key="sk_123"
 )
 
 model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(

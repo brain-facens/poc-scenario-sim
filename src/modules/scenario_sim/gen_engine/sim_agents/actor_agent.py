@@ -5,7 +5,7 @@ from modules.scenario_sim.gen_engine.gen_parts.actor_briefing import ActorBriefi
 from modules.scenario_sim.gen_engine.prompts.actor_prompt import actor_prompt
 
 local_client: AsyncOpenAI = AsyncOpenAI(
-    base_url="http://172.16.51.162:11434/v1", api_key="sk_123"
+    base_url="http://localhost:11434/v1", api_key="sk_123"
 )
 
 model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
