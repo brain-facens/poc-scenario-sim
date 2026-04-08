@@ -1,8 +1,9 @@
-import tempfile
 import os
+import tempfile
 from datetime import datetime
+
+from dotenv import find_dotenv, load_dotenv
 from sqlalchemy.orm import Session
-from modules.gerador_atas.models.ata_model import AtaModel, TranscricaoModel
 
 from modules.gerador_atas.gen_engine.ata_engine import estruturar_ata
 from modules.gerador_atas.gen_engine.ata_utils import (
@@ -12,7 +13,9 @@ from modules.gerador_atas.gen_engine.ata_utils import (
     normalizar_lista_participantes,
 )
 from modules.gerador_atas.gen_engine.docx_builder import gerar_ata_docx
+from modules.gerador_atas.models.ata_model import AtaModel, TranscricaoModel
 
+<<<<<<< Updated upstream
 from typing import Optional
 from core.pagination import paginate_and_filter
 
@@ -27,6 +30,9 @@ def get_atas_service(db: Session, page: int = 1, limit: int = 10, numero_ata: Op
         default_order_by=AtaModel.created_at.desc()
     )
 
+=======
+_ = load_dotenv(dotenv_path=find_dotenv())
+>>>>>>> Stashed changes
 
 async def gerar_ata_docx_service(
     db: Session,
@@ -138,14 +144,19 @@ async def transcrever_audio_service(db: Session, audio_bytes: bytes, suffix: str
     so the server can start even without a GPU (transcription endpoint will
     fail at call time rather than startup).
     """
-    from modules.gerador_atas.gen_engine.transcribe import transcribeX
+    from modules.gerador_atas.gen_engine.transcribe import transcribe_api, transcribeX
 
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
         tmp.write(audio_bytes)
         tmp_path = tmp.name
 
+    transcribe_backend = os.getenv("TRANSCRIBE_BACKEND", "local").strip().lower()
+
     try:
-        transcricao, elapsed = transcribeX(tmp_path)
+        if transcribe_backend == "openai":
+            transcricao, elapsed = await transcribe_api(tmp_path)
+        else:
+            transcricao, elapsed = transcribeX(tmp_path)
     finally:
         os.remove(tmp_path)
 
