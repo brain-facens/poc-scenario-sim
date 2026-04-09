@@ -67,6 +67,16 @@ def p(
         f'<w:t xml:space="preserve">{escape(text)}</w:t></w:r></w:p>'
     )
 
+def p_page_break():
+    """Parágrafo com quebra de página."""
+    return (
+        "<w:p>"
+        "<w:r>"
+        '<w:br w:type="page"/>'
+        "</w:r>"
+        "</w:p>"
+    )
+
 
 def p_bullet(text):
     """Parágrafo com bullet point."""
@@ -152,6 +162,10 @@ def p_assinatura_tabela(participantes):
 
     def celula(nome):
         rp = rpr_cell()
+        espaco_p = (
+            f'<w:p><w:pPr><w:jc w:val="center"/>'
+            f'<w:spacing w:line="360" w:lineRule="auto"/>{rp}</w:pPr></w:p>'
+        )
         linha_p = (
             f'<w:p><w:pPr><w:jc w:val="center"/>{rp}</w:pPr>'
             f"<w:r>{rp}<w:t>{escape(LINHA)}</w:t></w:r></w:p>"
@@ -160,7 +174,7 @@ def p_assinatura_tabela(participantes):
             f'<w:p><w:pPr><w:jc w:val="center"/>{rp}</w:pPr>'
             f"<w:r>{rp}<w:t>{escape(nome)}</w:t></w:r></w:p>"
         )
-        return f"<w:tc>{tcpr()}{linha_p}{nome_p}</w:tc>"
+        return f"<w:tc>{tcpr()}{espaco_p}{espaco_p}{linha_p}{nome_p}</w:tc>"
 
     def celula_vazia():
         return f'<w:tc>{tcpr()}<w:p><w:pPr><w:jc w:val="center"/></w:pPr></w:p></w:tc>'
@@ -274,6 +288,7 @@ def build_document_xml(
 
     # Assinaturas
     if participantes:
+        pars.append(p_page_break())
         pars.append(p("Assinaturas:", bold=True, justify=False))
         pars.append(p(""))
         pars.append(p_assinatura_tabela(participantes))

@@ -36,6 +36,7 @@ _whisper_lock = asyncio.Semaphore(1)
 def _load_models_lazy():
     """Carrega os modelos para VRAM de forma preguiçosa caso ainda não existam."""
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    
     compute_type = "float16" if device == "cuda" else "int8"
     model_dir = "src/model/"
     
@@ -66,7 +67,7 @@ async def transcribeX(audio_file: str) -> tuple[str, float]:
     
     async with _whisper_lock:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        batch_size = 4
+        batch_size = 2
         
         # Load if not loaded
         _load_models_lazy()
