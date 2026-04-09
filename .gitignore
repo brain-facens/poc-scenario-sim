@@ -215,3 +215,4 @@ src/*.json
 src/src/
 /src/pdf_exports/*.docx
 *jsonl
+.agent/
