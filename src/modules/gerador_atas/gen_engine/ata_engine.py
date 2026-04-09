@@ -15,11 +15,9 @@ from dotenv import find_dotenv, load_dotenv
 from openai import AsyncOpenAI, AuthenticationError, RateLimitError
 
 from modules.gerador_atas.gen_engine.prompts.ata_prompts_completo import (
-    PROMPT_CORRETOR,
     PROMPT_DELIBERACOES,
     PROMPT_INTRODUCAO,
     PROMPT_TOPICOS,
-    PROMPT_VALIDADOR,
 )
 
 # ---------------------------------------------------------------------------
