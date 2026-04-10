@@ -213,7 +213,7 @@ def _build_messages_for_caching(transcricao: str, dados_manuais: str, prompt_tem
         f"## DADOS MANUAIS\n<DADOS_MANUAIS_INICIO>\n{dados_manuais}\n<DADOS_MANUAIS_FIM>\n\n"
         f"## TRANSCRIÇÃO DE REFERÊNCIA\n<TRANSCRICAO_INICIO>\n{transcricao}\n<TRANSCRICAO_FIM>\n\n"
         f"IMPORTANTE: Utilize os DADOS MANUAIS para aplicar correções tácitas em nomes de pessoas, cargos ou jargões encontrados na transcrição."
-        f"Nunca adicione títulos ou cabeçalhos à sua resposta."
+        f"Nunca adicione títulos ou cabeçalhos à sua resposta como por exemplo: '1. Deliberações:'."
     )
     
     # Remove as marcações vazias do template do user p/ focar só nas regras
