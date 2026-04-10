@@ -8,7 +8,8 @@ O **Brain Hub API** é um back-end robusto e modular construído em **FastAPI**,
 A "joia da coroa" atual do repositório. Este módulo não apenas transcreve áudios com alta precisão, mas orquestra um enxame de agentes LLMs paralelos para formular a documentação executiva (DOCX) instantaneamente.
 
 **Arquitetura e Highlights:**
-* **WhisperX com Lock na VRAM:** Carregamento em padrão _Singleton_ isolado (`Semaphore(1)`) de um pipeline Diarization + WhisperX operando via CUDA (PyTorch). Permite o cruzamento simultâneo de requisições de vários usuários na mesma GPU sem explodir a memória (OOM).
+* **WhisperX com Lock na VRAM e Coleta de Lixo Ativa:** Carregamento em padrão _Singleton_ isolado (`Semaphore(1)`) do pipeline de Transcrição + Diarização atuando via PyTorch (CUDA). Possui varredura de fragmentação (`gc.collect`) garantindo que Placas de Vídeo (GPU) de uso comum comercial (com 4GB a 8GB de memória) processem múltiplos arquivos sem o erro letal de _Cuda Out-Of-Memory (OOM)_.
+* **Viabilidade na CPU e Configuração Dinâmica:** Flexibilidade nativa para desenvolvedores. As dimensões dos Modelos (`turbo`, `small`, etc) são parametrizáveis pelo `.env`. Se executado em um servidor virtual de baixo custo sem GPU na nuvem, o sistema migra puramente para os núcleos do processador (CPU) preservando a aplicação em pé em _graceful degradation_.
 * **Smart LLM Routing (Cascata Dinâmica):** É possível trabalhar integralmente local (`Ollama` atuando em rede via KV Cache) ou acionar o motor `OpenAI` nativo usufruindo da técnica de **Prompt Caching** (injeção otimizada para corte de 80% dos custos e diminuição extrema de latência). O sistema faz fallback automático caso os créditos da nuvem se esgotem.
 * **Master Flow Paralelo:** Sem fila indiana de agentes. Introdução, Tópicos e Deliberações são forjados rodando simultaneamente (`asyncio.gather`), despejando Markdowns diretos para dentro da lógica nativa em listagem de Python. Transformação `Audio -> LLM Paralelo -> Arquivo Word (.docx)` com zero burocracia de tempo.
 
@@ -76,14 +77,19 @@ HF_KEY="hf_..."
 # 'local': Força o uso do Ollama e desabilita requests pra web
 BACKEND_MODE="auto" 
 
-# Configuração da Transcrição
-# 'local': Vai utilizar a Placa de Vídeo e VRAM local da GPU
+# Configuração da Transcrição e Gestão de VRAM
+# 'local': Vai utilizar a Placa de Vídeo / Processador Local
 TRANSCRIBE_BACKEND="local" 
+# Gestões de perfomance p/ evitar Gargalos (Leia os topicos do README)
+WHISPER_MODEL_SIZE="small" 
+WHISPER_COMPUTE_TYPE="int8"
+WHISPER_BATCH_SIZE="1" 
 ```
 
 ### 4. Banco de Dados
 Aqueça o banco de dados rodando a cabeça das migrations do Alembic:
 ```bash
+cd src
 alembic upgrade head
 ```
 
