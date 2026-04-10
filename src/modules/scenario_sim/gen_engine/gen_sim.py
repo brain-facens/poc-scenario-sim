@@ -26,7 +26,7 @@ async def generate(usr_input: str) -> Scenario:
                 run_config=RunConfig(
                     model="gpt-5-nano",
                     model_settings=ModelSettings(
-                        reasoning=Reasoning(effort="low"),
+                        reasoning=Reasoning(effort="high"),
                     ),
                 ),
             )
