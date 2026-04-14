@@ -15,11 +15,9 @@ from dotenv import find_dotenv, load_dotenv
 from openai import AsyncOpenAI, AuthenticationError, RateLimitError
 
 from modules.gerador_atas.gen_engine.prompts.ata_prompts_completo import (
-    PROMPT_CORRETOR,
     PROMPT_DELIBERACOES,
     PROMPT_INTRODUCAO,
     PROMPT_TOPICOS,
-    PROMPT_VALIDADOR,
 )
 
 # ---------------------------------------------------------------------------
@@ -129,7 +127,6 @@ async def _completion(
     model = cfg.model_small if reasoning else cfg.model_large
     kwargs: dict = dict(model=model, messages=messages)
 
-    # reasoning_effort é exclusivo da OpenAI — não enviar para Ollama
     if reasoning and cfg.name == "OpenAI":
         kwargs["reasoning_effort"] = "high"
 
@@ -140,8 +137,22 @@ async def _completion(
     t0 = time.time()
 
     try:
-        resp = await cfg.client.chat.completions.create(**kwargs)
-        content = _to_text(resp.choices[0].message.content)
+        kwargs["stream"] = True
+        content_parts: list[str] = []
+
+        print(f"\n{'─'*60}", flush=True)
+        print(f"[{agent_name}] ▶ streaming ({cfg.name} / {model})", flush=True)
+        print('─'*60, flush=True)
+
+        async with await cfg.client.chat.completions.create(**kwargs) as stream:
+            async for chunk in stream:
+                delta = chunk.choices[0].delta.content if chunk.choices else None
+                if delta:
+                    content_parts.append(delta)
+                    print(delta, end="", flush=True)
+
+        print(f"\n{'─'*60}\n", flush=True)
+        content = "".join(content_parts).strip()
         duration = round(time.time() - t0, 3)
 
         _append_llm_log({
@@ -187,7 +198,6 @@ async def _completion(
         logger.error("[%s] Erro inesperado: %s", agent_name, exc)
         raise
 
-
 # ---------------------------------------------------------------------------
 # Agentes
 # ---------------------------------------------------------------------------
@@ -203,6 +213,7 @@ def _build_messages_for_caching(transcricao: str, dados_manuais: str, prompt_tem
         f"## DADOS MANUAIS\n<DADOS_MANUAIS_INICIO>\n{dados_manuais}\n<DADOS_MANUAIS_FIM>\n\n"
         f"## TRANSCRIÇÃO DE REFERÊNCIA\n<TRANSCRICAO_INICIO>\n{transcricao}\n<TRANSCRICAO_FIM>\n\n"
         f"IMPORTANTE: Utilize os DADOS MANUAIS para aplicar correções tácitas em nomes de pessoas, cargos ou jargões encontrados na transcrição."
+        f"Nunca adicione títulos ou cabeçalhos à sua resposta como por exemplo: '1. Deliberações:'."
     )
     
     # Remove as marcações vazias do template do user p/ focar só nas regras

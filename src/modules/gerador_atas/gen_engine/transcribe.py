@@ -36,13 +36,17 @@ _whisper_lock = asyncio.Semaphore(1)
 def _load_models_lazy():
     """Carrega os modelos para VRAM de forma preguiçosa caso ainda não existam."""
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    compute_type = "float16" if device == "cuda" else "int8"
+    
+    compute_type_env = os.getenv("WHISPER_COMPUTE_TYPE", "int8")
+    compute_type = compute_type_env if device == "cuda" else "int8"
+    
+    model_size = os.getenv("WHISPER_MODEL_SIZE", "small")
     model_dir = "src/model/"
     
     if _WHISPER_MODELS["model"] is None:
-        logger.info("Carregando WhisperX na VRAM pela primeira vez...")
+        logger.info(f"Carregando WhisperX ({model_size}) na VRAM pela primeira vez com {compute_type}...")
         _WHISPER_MODELS["model"] = whisperx.load_model(
-            "turbo",
+            model_size,
             device,
             compute_type=compute_type,
             language="pt",
@@ -65,41 +69,47 @@ async def transcribeX(audio_file: str) -> tuple[str, float]:
     start_model = time.time()
     
     async with _whisper_lock:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        batch_size = 4
-        
-        # Load if not loaded
-        _load_models_lazy()
-        
-        # Run inference synchronously within threadpool if needed, but since Torch is blocking,
-        # we are relying on lock to prevent crashes. A proper threadpool wrapping is ok but Semaphore rules.
-        audio = whisperx.load_audio(audio_file)
-        
-        result = _WHISPER_MODELS["model"].transcribe(audio, batch_size=batch_size, language="pt")
-        
-        result = whisperx.align(
-            result["segments"],
-            _WHISPER_MODELS["model_a"],
-            _WHISPER_MODELS["metadata"],
-            audio,
-            device,
-            return_char_alignments=False,
-        )
-        
-        diarize_segments = _WHISPER_MODELS["diarize_model"](audio)
-        result = whisperx.assign_word_speakers(diarize_segments, result)
+        try:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            batch_size = int(os.getenv("WHISPER_BATCH_SIZE", "1"))
+            
+            # Load if not loaded
+            _load_models_lazy()
+            
+            # Run inference synchronously within threadpool if needed, but since Torch is blocking,
+            # we are relying on lock to prevent crashes. A proper threadpool wrapping is ok but Semaphore rules.
+            audio = whisperx.load_audio(audio_file)
+            
+            result = _WHISPER_MODELS["model"].transcribe(audio, batch_size=batch_size, language="pt")
+            
+            result = whisperx.align(
+                result["segments"],
+                _WHISPER_MODELS["model_a"],
+                _WHISPER_MODELS["metadata"],
+                audio,
+                device,
+                return_char_alignments=False,
+            )
+            
+            diarize_segments = _WHISPER_MODELS["diarize_model"](audio)
+            result = whisperx.assign_word_speakers(diarize_segments, result)
 
-        linhas = []
-        for seg in result["segments"]:
-            start = seg.get("start", 0)
-            end = seg.get("end", 0)
-            speaker = seg.get("speaker", "UNKNOWN")
-            text = seg.get("text", "").strip()
-            linhas.append(f"[{start:.2f} - {end:.2f}] {speaker}: {text}")
+            linhas = []
+            for seg in result["segments"]:
+                start = seg.get("start", 0)
+                end = seg.get("end", 0)
+                speaker = seg.get("speaker", "UNKNOWN")
+                text = seg.get("text", "").strip()
+                linhas.append(f"[{start:.2f} - {end:.2f}] {speaker}: {text}")
 
-        transcricao_texto = "\n".join(linhas)
-        elapsed = time.time() - start_model
-        return transcricao_texto, elapsed
+            transcricao_texto = "\n".join(linhas)
+            elapsed = time.time() - start_model
+            return transcricao_texto, elapsed
+        finally:
+            # Limpeza ativa para evitar VRAM fragmentation e CUDA OOM 
+            if device == "cuda":
+                gc.collect()
+                torch.cuda.empty_cache()
 
 
 async def transcribe_api(audio_path: str) -> tuple[str, float]:
