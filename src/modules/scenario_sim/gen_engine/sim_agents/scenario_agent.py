@@ -1,3 +1,4 @@
+import os
 from agents import Agent, OpenAIChatCompletionsModel
 from openai import AsyncOpenAI
 
@@ -9,12 +10,14 @@ from modules.scenario_sim.gen_engine.sim_agents.participants_agent import (
 )
 from modules.scenario_sim.gen_engine.sim_agents.scene_agent import scene_agent
 
+MODEL = os.getenv("LOCAL_MODEL", "qwen3.5:9b")
+
 local_client: AsyncOpenAI = AsyncOpenAI(
     base_url="http://localhost:11434/v1", api_key="sk_123"
 )
 
 model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
-    model="qwen3.5:9b", openai_client=local_client
+    model=MODEL, openai_client=local_client
 )
 
 simulation_agent: Agent = Agent(
