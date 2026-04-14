@@ -1,29 +1,101 @@
-from typing import List, Optional
+from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from fastapi.concurrency import run_in_threadpool
+from fastapi_utilities import repeat_every
 
-from routes import general_routes, users_routes
-from database import engine, Base
-from models import users_model
+from database import SessionLocal
 
-# database setup
-# Base.metadata.create_all(bind=engine)
+# --- Module routers ---
+from modules.auth.routes.user_routes import users_router
+from modules.general.routes.general_routes import general_router
+from modules.gerador_atas.routes.ata_routes import atas_router
+from modules.scenario_sim.routes.actor_routes import actor_router
+from modules.scenario_sim.routes.material_routes import material_router
+from modules.scenario_sim.routes.scene_routes import scene_router
+from modules.scenario_sim.routes.simulation_routes import simulation_router
+from modules.scenario_sim.routes.evaluation_routes import evaluation_router
+from modules.scenario_sim.services.simulation_services import (
+    cleanup_timed_out_simulations,
+    process_stale_queue,
+)
+from modules.logging.middleware.request_logging_middleware import RequestLoggingMiddleware
+from modules.logging.routes.request_log_routes import logs_router
+from modules.voice_changer.routes.voice_changer_routes import voice_changer_router
+from modules.voice_changer.services.voice_changer_services import check_health
 
-# app setup
-app = FastAPI(title="sql alchemy")
+
+@repeat_every(seconds=3000)
+async def simulation_watchdog():
+    print("DEBUG: Watchdog cycle started...")
+    """Periodically checks for timeouts and processes the queue."""
+    db = SessionLocal()
+    try:
+        cleanup_count = cleanup_timed_out_simulations(db)
+        promoted_id = await process_stale_queue(db)
+
+        if cleanup_count > 0 or promoted_id:
+            print(f"Watchdog: Cleaned {cleanup_count} | Promoted {promoted_id}")
+
+    except Exception as e:
+        print(f"Watchdog Error: {e}")
+    finally:
+        db.close()
+
+
+@repeat_every(seconds=870)
+async def keep_voice_changer_alive():
+    """Pings the Voice Changer API to prevent it from sleeping on Render."""
+    try:
+        result = await run_in_threadpool(check_health)
+        print(f"Voice Changer ping successful: {result}")
+    except Exception as e:
+        print(f"Voice Changer ping failed: {e}")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await simulation_watchdog()
+    await keep_voice_changer_alive()
+    yield
+
+
+app = FastAPI(title="Brain Hub API", lifespan=lifespan)
+
+# --- Middleware (order matters: last added = outermost) ---
+app.add_middleware(RequestLoggingMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(general_routes.general_router)
-app.include_router(users_routes.users_router)
+# General
+app.include_router(general_router)
+
+# Auth / Users
+app.include_router(users_router)
+
+# Scenario Simulation
+app.include_router(simulation_router)
+app.include_router(actor_router)
+app.include_router(scene_router)
+app.include_router(material_router)
+app.include_router(evaluation_router)
+
+# Gerador de ATAs
+app.include_router(atas_router)
+
+# Voice Changer
+app.include_router(voice_changer_router)
+
+# Logging
+app.include_router(logs_router)
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", reload=True)
+    uvicorn.run("app:app", reload=True, timeout_keep_alive=86400)

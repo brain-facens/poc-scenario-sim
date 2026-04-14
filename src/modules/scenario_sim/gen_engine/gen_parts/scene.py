@@ -1,0 +1,7 @@
+from pydantic import BaseModel
+
+
+class Scene(BaseModel):
+    student_plan_a: str
+    actor_sim_directions: str
+    actor_plan_b: str

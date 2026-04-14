@@ -1,0 +1,157 @@
+```html
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Simulação de Punção Venosa</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        h2 {
+            border-bottom: 2px solid #333;
+            padding-bottom: 5px;
+            margin: 20px 0 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #555;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .section {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="section">
+        <h2>Cena Organização</h2>
+        <p>Cena 1: Avaliação inicial e construção de confiança<br>Cena 2: Realização da punção venosa com técnicas de distração<br>Cena 3: Follow-up e plano de reforço da autonomia do paciente</p>
+    </div>
+    <div class="section">
+        <h2>Participantes</h2>
+        <table>
+            <tr>
+                <th>Usa Simulador</th>
+                <th>Quantidade de Estudantes</th>
+                <th>Quantidade de Atores</th>
+            </tr>
+            <tr>
+                <td>Sim</td>
+                <td>1</td>
+                <td>2</td>
+            </tr>
+            <tr>
+                <th>Rol Estudante</th>
+                <th>Rol Ator</th>
+                <th>Rol Simulador</th>
+            </tr>
+            <tr>
+                <td>Realizar exame clínico com empatia, aplicar técnica de punção venosa e gerenciar ansiedade</td>
+                <td>Paciente idoso com fobia de agulhas e acompanhante familiar</td>
+                <td>Criar ambiente realista com equipamentos médicos e cenário doméstico</td>
+            </tr>
+        </table>
+    </div>
+    <div class="section">
+        <h2>Apresentação do Caso</h2>
+        <p><strong>Cenário:</strong> Um idoso de 78 anos apresenta dificuldade para administrar medicação oral devido à redução da mobilidade articular, necessitando de punção venosa. O paciente relata histórico de fobia de agulhas desde a infância, com episódios de crises de pânico em situações semelhantes. O acompanhante familiar solicita o atendimento domiciliar para evitar estresse do paciente.</p>
+        <p><strong>Objetivos:</strong><br>- Realizar punção venosa com suporte psicológico<br>- Demonstrar habilidade de comunicação clínica<br>- Manter padrão de segurança e ética na assistência</p>
+    </div>
+    <div class="section">
+        <h2>Apresentação dos Atores</h2>
+        <table>
+            <tr>
+                <th>Dados Pessoais</th>
+                <th>História Atual</th>
+                <th>História Anterior</th>
+                <th>Vestimenta</th>
+                <th>Perfil de Comportamento</th>
+            </tr>
+            <tr>
+                <td>Idoso masculino, 78 anos, com histórico de hipertensão arterial e diabetes tipo 2</td>
+                <td>Foge de ambientes hospitalares, tem inquietação ao ver equipamentos médicos e demonstra ansiedade ao mencionar agulhas</td>
+                <td>Experiência traumática em infância com punção para vacina, sem histórico de intervenções médicas recentes</td>
+                <td>Vestindo camisa de mangas curtas, com sinais de edema periférico nas mãos</td>
+                <td>Sinais de ansiedade: tremores nas mãos, respiração acelerada, evita contato visual, demonstra dificuldade para se sentar em cadeira</td>
+            </tr>
+            <tr>
+                <td>Filha do idoso, 52 anos, enfermeira ambulante</td>
+                <td>Atua como mediadora entre o paciente e o médico, possui conhecimento básico de medicamentos</td>
+                <td>Já auxiliou no cuidado do idoso em casa, mas não tem experiência com punções</td>
+                <td>Vestindo roupas práticas para trabalho de campo, com instrumentos de primeiros socorros</td>
+                <td>Calma, orienta o idoso com palavras tranquilizadoras, demonstra preocupação com o bem-estar do paciente</td>
+            </tr>
+        </table>
+    </div>
+    <div class="section">
+        <h2>Parâmetros do Simulador</h2>
+        <p>Ambientação: Sala de estar com sofá, cadeira, mesa de centro com copos e frascos de medicamentos. Equipamentos: Kit para punção venosa, termômetro, tensômetro, e material de limpeza. Tamanho da simulação: 45 minutos (15 min por cena)</p>
+    </div>
+    <div class="section">
+        <h2>Parâmetros de Evolução da Simulação</h2>
+        <p>Plano B: Se o paciente desenvolver hiperventilação, o estudante deve interromper a punção, aplicar técnicas de respiração diafragmática e usar uma seringa com agulha de menor calibre. Caso a ansiedade persista, substituir a punção por via oral com uso de soro intravenoso em ambiente controlado.</p>
+    </div>
+    <div class="section">
+        <h2>Apresentação dos Estudantes</h2>
+        <table>
+            <tr>
+                <th>Regra 1</th>
+                <th>Regra 2</th>
+                <th>Regra 3</th>
+            </tr>
+            <tr>
+                <td>Explicar cada etapa com antecipação (ex: 'Vou limpar o local com álcool primeiro')</td>
+                <td>Usar técnica de 'agulha curta e rápida' para minimizar dor</td>
+                <td>Manter contato visual e fala tranquila durante o procedimento</td>
+            </tr>
+        </table>
+    </div>
+    <div class="section">
+        <h2>Fluxo da Cena</h2>
+        <table>
+            <tr>
+                <th>Rol do Estudante</th>
+                <th>Rol do Ator/Simulador</th>
+                <th>Plano B do Estudante</th>
+            </tr>
+            <tr>
+                <td>Realizar avaliação inicial com perguntas abertas sobre ansiedade, explicar o propósito da punção e verificar sinais vitais</td>
+                <td>Demonstrar ansiedade com gestos e fala hesitante, pedir para que a família acompanhe o procedimento</td>
+                <td>Oferecer opção de administrar medicamento por via oral se a punção for impossível</td>
+            </tr>
+            <tr>
+                <td>Executar punção com técnicas de distração (ex: falar sobre interesses do paciente enquanto prepara materiais)</td>
+                <td>Mostrar tremores, respiração acelerada e tentativas de se levantar para fugir</td>
+                <td>Usar agulha de 25G e aplicar anestésico local se necessário</td>
+            </tr>
+            <tr>
+                <td>Reforçar orientações pós-procedimento e verificar compreensão do paciente sobre cuidados com a via intravenosa</td>
+                <td>Demonstrar preocupação com o bem-estar do idoso e solicitar que a família permaneça presente</td>
+                <td>Recomendar uso de compressa quente no local e monitorar sinais de reação alérgica</td>
+            </tr>
+        </table>
+    </div>
+    <div class="section">
+        <h2>Avaliação Pós-Simulação</h2>
+        <p>Avaliação de desempenho com foco em:<br>- Tempo de execução do procedimento<br>- Nível de conforto do paciente (medido por escala visual analógica)<br>- Adesão ao protocolo de segurança (ex: autocuidado com agulhas)</p>
+    </div>
+    <div class="section">
+        <h2>Apêndice</h2>
+        <p><em>Sugestão de materiais complementares para simulação - caixas de som para distração (ex: música clássica) e simulador de punção virtual</em></p>
+    </div>
+</body>
+</html>

@@ -13,3 +13,23 @@ python-multipart==0.0.21
 
 # Utilities
 python-dotenv==1.2.1
+fastapi-utilities
+
+# OpenAI
+openai-agents==0.9.2
+openai>=1.0.0
+
+# LangChain (used by gerador_atas prompts)
+langchain-core
+
+# Project
+weasyprint==68.1
+
+# gerador_atas — transcription (requires CUDA GPU)
+torch
+numpy
+openai-whisper
+whisperx
+
+# HTTP Clients
+requests
