@@ -1,9 +1,15 @@
+import enum
 import uuid
-from sqlalchemy import Column, ForeignKey, String, Float, DateTime, Text
+from sqlalchemy import Column, Enum, ForeignKey, String, Float, DateTime, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
 
+class AtaStatus(enum.Enum):
+    COMPLETE = "complete"
+    DOING = "doing"
+    INTERRUPTED = "interrupted"
+    STALE = "stale"
 
 class TranscricaoModel(Base):
     __tablename__ = "transcricoes"
@@ -41,9 +47,14 @@ class AtaModel(Base):
     resumo = Column(Text)
     assuntos_discutidos = Column(Text)
     deliberacoes = Column(Text)
+    info_adicional = Column(Text, nullable=True)
 
     transcricao_id = Column(String(36), ForeignKey("transcricoes.id"), unique=True)
     
+    status = Column(Enum(AtaStatus), default=AtaStatus.DOING, nullable=False)
+    file_path = Column(String(255), nullable=True)
+    error = Column(String, nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
