@@ -251,7 +251,13 @@ async def gerar_deliberacoes(transcricao: str, dados_manuais: str) -> str:
     logger.info("[Deliberações] Gerando…")
     result = await _completion(
         cfg=_CFG, fallback=_FALLBACK,
+<<<<<<< Updated upstream
         messages=_build_messages_for_caching(transcricao, dados_manuais, PROMPT_DELIBERACOES),
+=======
+        messages=[{"role": "user", "content": PROMPT_DELIBERACOES.format(
+            transcricao=transcricao, dados_manuais=dados_manuais,
+        )}],
+>>>>>>> Stashed changes
         reasoning=True, agent_name="Deliberações",
     )
     logger.info("[Deliberações] Concluídas (%d chars).", len(result))
