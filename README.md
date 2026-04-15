@@ -132,16 +132,41 @@ python app.py
 
 ---
 
-## 📍 Principais Endpoints
+## 📍 Mapeamento de Endpoints (API Reference)
 
+> [!NOTE]
+> **Atenção:** As tabelas abaixo representam apenas uma **visualização facilitada** dos principais recursos da API. Elas não contêm todos os endpoints disponíveis. 
+> Para visualizar a documentação técnica completa e interativa (OpenAPI/Swagger), execute a aplicação e acesse: **[http://localhost:8000/docs](http://localhost:8000/docs)**.
+
+### 🔐 Autenticação e Usuários (`auth`)
+| Método | Endpoint | Descrição |
+| :--- | :--- | :--- |
+| `POST` | `/users/login` | Autenticação e geração de token JWT. |
+| `POST` | `/users/` | Cadastro de novos usuários. |
+| `GET` | `/users/me` | Retorna os dados do usuário logado. |
+
+### 🎙️ Gerador de Atas (`atas`)
+| Método | Endpoint | Descrição |
+| :--- | :--- | :--- |
+| `POST` | `/atas/transcrever` | Pipeline de transcrição WhisperX + Diarização. |
+| `POST` | `/atas/gerar-doc` | Processamento via Agentes AI e geração de Word. |
+| `GET` | `/atas/{id}/download` | Download do arquivo `.docx` gerado. |
+
+### 🎭 Scenario Simulator (`simulations`)
+| Método | Endpoint | Descrição |
+| :--- | :--- | :--- |
+| `POST` | `/simulations/` | Inicia uma nova simulação (Cenário + Atores). |
+| `PATCH` | `/simulations/{id}` | Atualiza o estado/contexto de uma simulação. |
+| `GET` | `/simulations/pdf/{id}` | Download do relatório final em PDF (WeasyPrint). |
+| `POST` | `/scenes/` | CRUD de cenários base para as simulações. |
+| `POST` | `/evaluations/` | Cria avaliações inteligentes sobre os resultados. |
+
+### 🔊 Voice Changer & Logs
 | Módulo | Método | Endpoint | Objetivo |
 | :--- | :--- | :--- | :--- |
-| **Atas** | `POST` | `/atas/transcrever` | Transcreve áudio com diarização (retorna texto puro). |
-| **Atas** | `POST` | `/atas/gerar-doc` | Orquestra Agentes AI e gera o arquivo `.docx`. |
-| **Simulação** | `POST` | `/simulation/` | Inicia uma nova simulação de cenário complexo. |
-| **Simulação** | `GET` | `/simulation/pdf/{id}` | Exporta o resultado da simulação para PDF. |
-| **Voz** | `POST` | `/voice_change` | Proxy para mutação de voz via API externa. |
-| **Logs** | `GET` | `/logging/stats/summary` | Dashboard de latência e custos das LLMs. |
+| **Voz** | `POST` | `/voice-changer/services/voice_change` | Transmutação de timbre via API externa. |
+| **Logs** | `GET` | `/logs/stats/summary` | Resumo de latência, custos e métricas de IA. |
+| **General** | `GET` | `/general/status` | Verificação de integridade do sistema. |
 
 ---
 
