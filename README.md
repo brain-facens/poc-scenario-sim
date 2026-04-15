@@ -54,6 +54,11 @@ Gerenciamento de identidades, senhas com salt (`passlib[argon2]`), chaves simét
 - **Python 3.12+**
 - (Opcional, mas exigido para transcrições e processamentos locais espessos) **Placa de Vídeo NVIDIA** (CUDA 11.8+ / 12.0+) 
 
+> [!IMPORTANT]
+> **Atenção (Diarização):** Para que a separação de vozes (Speaker Diarization) funcione, você **PRECISA** aceitar os termos de uso dos seguintes modelos no Hugging Face com sua conta logada, e depois gerar um `HF_KEY` (Read Token):
+> 1. [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1)
+> 2. [pyannote/segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
+
 ### 2. Instalação e Ambiente Virtual
 
 Para isolar as dependências apropriadamente de forma limpa, inicialize o ambiente através do **Conda**:

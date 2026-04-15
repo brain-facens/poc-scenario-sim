@@ -31,7 +31,7 @@ from modules.voice_changer.routes.voice_changer_routes import voice_changer_rout
 from modules.voice_changer.services.voice_changer_services import check_health
 
 
-@repeat_every(seconds=3000)
+@repeat_every(seconds=5)
 async def simulation_watchdog():
     print("DEBUG: Watchdog cycle started...")
     """Periodically checks for timeouts and processes the queue."""
@@ -49,7 +49,7 @@ async def simulation_watchdog():
         db.close()
 
 
-@repeat_every(seconds=3000)
+@repeat_every(seconds=5)
 async def ata_watchdog():
     print("DEBUG: Ata Watchdog cycle started...")
     """Periodically checks for timeouts and processes the ATA queue."""
