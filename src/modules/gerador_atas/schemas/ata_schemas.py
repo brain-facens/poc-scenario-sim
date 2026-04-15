@@ -1,4 +1,5 @@
 from pydantic import BaseModel, field_validator
+from datetime import datetime
 
 from modules.gerador_atas.gen_engine.ata_utils import _to_list
 
@@ -34,6 +35,8 @@ class AtaData(BaseModel):
     status:              str | None = None
     file_path:           str | None = None
     error:               str | None = None
+    created_at:          datetime | None = None
+    updated_at:          datetime | None = None
     numero_ata:          str
     orgao:               str
     sala:                str
