@@ -21,6 +21,10 @@ from modules.scenario_sim.services.simulation_services import (
     cleanup_timed_out_simulations,
     process_stale_queue,
 )
+from modules.gerador_atas.services.ata_services import (
+    cleanup_timed_out_atas,
+    process_stale_ata_queue,
+)
 from modules.logging.middleware.request_logging_middleware import RequestLoggingMiddleware
 from modules.logging.routes.request_log_routes import logs_router
 from modules.voice_changer.routes.voice_changer_routes import voice_changer_router
@@ -45,6 +49,25 @@ async def simulation_watchdog():
         db.close()
 
 
+@repeat_every(seconds=3000)
+async def ata_watchdog():
+    print("DEBUG: Ata Watchdog cycle started...")
+    """Periodically checks for timeouts and processes the ATA queue."""
+    db = SessionLocal()
+    try:
+        cleanup_count = cleanup_timed_out_atas(db)
+        promoted_id = await process_stale_ata_queue(db)
+
+        if cleanup_count > 0 or promoted_id:
+            print(f"Ata Watchdog: Cleaned {cleanup_count} | Promoted {promoted_id}")
+
+    except Exception as e:
+        print(f"Ata Watchdog Error: {e}")
+    finally:
+        db.close()
+
+
+
 @repeat_every(seconds=870)
 async def keep_voice_changer_alive():
     """Pings the Voice Changer API to prevent it from sleeping on Render."""
@@ -58,6 +81,7 @@ async def keep_voice_changer_alive():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await simulation_watchdog()
+    await ata_watchdog()
     await keep_voice_changer_alive()
     yield
 

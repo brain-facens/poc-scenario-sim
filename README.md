@@ -103,6 +103,27 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ---
 
+## 🔄 Migrações e Reset do Banco (Desenvolvimento)
+
+Como o projeto está em fase inicial de **Proof of Concept (PoC)** e a estrutura das tabelas é altamente volátil, não estamos utilizando fluxos complexos de migração incremental para não travar a agilidade do desenvolvimento.
+
+Para realizar uma migração limpa em ambiente de **DESENVOLVIMENTO**, siga estes passos:
+
+1.  **Limpeza de Versões:** Vá até a pasta raiz e delete todos os arquivos dentro de `alembic/versions/` (mantenha apenas a pasta e o arquivo `script.py.mako` se houver).
+2.  **Reset do Banco:** Delete o arquivo atual do banco de dados (ex: `.db`) que reside dentro da pasta `src/`.
+3.  **Gerar Nova Revisão:** Execute o comando para mapear a estrutura atual:
+    ```bash
+    alembic revision --autogenerate -m "init db"
+    ```
+4.  **Aplicar Migração:** Suba a nova estrutura para o banco:
+    ```bash
+    alembic upgrade head
+    ```
+
+> ⚠️ **Nota:** Este procedimento apaga todos os dados locais. Use apenas enquanto a estrutura do banco estiver mudando drasticamente dia após dia.
+
+---
+
 ## 📂 Estrutura de Diretórios Básica
 
 ```
