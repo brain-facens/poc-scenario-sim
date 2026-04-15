@@ -108,6 +108,8 @@ def _to_list(v):
         >>> _to_list('item1')
         ['item1']
     """
+    if v is None:
+        return []
     if isinstance(v, list):
         return v
     if isinstance(v, str):

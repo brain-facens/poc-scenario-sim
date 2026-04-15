@@ -1,4 +1,5 @@
 from pydantic import BaseModel, field_validator
+from datetime import datetime
 
 from modules.gerador_atas.gen_engine.ata_utils import _to_list
 
@@ -30,6 +31,12 @@ class AtaInputManual(BaseModel):
 
 class AtaData(BaseModel):
     """Full structured ATA, as returned by the LLM pipeline."""
+    id:                  str
+    status:              str | None = None
+    file_path:           str | None = None
+    error:               str | None = None
+    created_at:          datetime | None = None
+    updated_at:          datetime | None = None
     numero_ata:          str
     orgao:               str
     sala:                str
@@ -44,10 +51,10 @@ class AtaData(BaseModel):
     ausentes:            list[str]
     condutor:            str
     secretario:          str
-    tema:                str
-    resumo:              str
-    assuntos_discutidos: list[str]
-    deliberacoes:        list[str]
+    tema:                str | None = None
+    resumo:              str | None = None
+    assuntos_discutidos: list[str] = []
+    deliberacoes:        list[str] = []
 
     @field_validator("participantes", "ausentes", "assuntos_discutidos", "deliberacoes", mode="before")
     @classmethod
