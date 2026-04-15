@@ -98,7 +98,7 @@ HF_KEY="hf_..."
 # 'auto': Tenta OpenAI para paralelismo veloz com Prompt Caching, e recua pro Ollama se falhar
 # 'local': Força o uso do Ollama e desabilita requests pra web
 BACKEND_MODE="auto" 
-
+```
 ### Explicação das Variáveis Chave
 
 | Variável | Opções | Descrição |
@@ -108,7 +108,6 @@ BACKEND_MODE="auto"
 | `WHISPER_MODEL_SIZE` | `small`, `turbo`, `large` | Define o peso do modelo na VRAM. `small` é recomendado para GPUs < 8GB. |
 | `WHISPER_COMPUTE_TYPE` | `int8`, `float16` | `int8` economiza 50% de VRAM com perda mínima de precisão. |
 | `WHISPER_BATCH_SIZE` | `1`, `2`, `...` | Quantidade de segmentos processados por vez. Reduza se tiver erro de memória. |
-```
 
 ### 4. Banco de Dados
 
