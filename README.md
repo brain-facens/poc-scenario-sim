@@ -54,6 +54,11 @@ Gerenciamento de identidades, senhas com salt (`passlib[argon2]`), chaves simét
 - **Python 3.12+**
 - (Opcional, mas exigido para transcrições e processamentos locais espessos) **Placa de Vídeo NVIDIA** (CUDA 11.8+ / 12.0+) 
 
+> [!IMPORTANT]
+> **Atenção (Diarização):** Para que a separação de vozes (Speaker Diarization) funcione, você **PRECISA** aceitar os termos de uso dos seguintes modelos no Hugging Face com sua conta logada, e depois gerar um `HF_KEY` (Read Token):
+> 1. [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1)
+> 2. [pyannote/segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
+
 ### 2. Instalação e Ambiente Virtual
 
 Para isolar as dependências apropriadamente de forma limpa, inicialize o ambiente através do **Conda**:
@@ -100,6 +105,27 @@ cd src
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 - Acesse o Painel do **Swagger UI** (Swagger Docs) p/ testes de rotas: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+---
+
+## 🔄 Migrações e Reset do Banco (Desenvolvimento)
+
+Como o projeto está em fase inicial de **Proof of Concept (PoC)** e a estrutura das tabelas é altamente volátil, não estamos utilizando fluxos complexos de migração incremental para não travar a agilidade do desenvolvimento.
+
+Para realizar uma migração limpa em ambiente de **DESENVOLVIMENTO**, siga estes passos:
+
+1.  **Limpeza de Versões:** Vá até a pasta raiz e delete todos os arquivos dentro de `alembic/versions/` (mantenha apenas a pasta e o arquivo `script.py.mako` se houver).
+2.  **Reset do Banco:** Delete o arquivo atual do banco de dados (ex: `.db`) que reside dentro da pasta `src/`.
+3.  **Gerar Nova Revisão:** Execute o comando para mapear a estrutura atual:
+    ```bash
+    alembic revision --autogenerate -m "init db"
+    ```
+4.  **Aplicar Migração:** Suba a nova estrutura para o banco:
+    ```bash
+    alembic upgrade head
+    ```
+
+> ⚠️ **Nota:** Este procedimento apaga todos os dados locais. Use apenas enquanto a estrutura do banco estiver mudando drasticamente dia após dia.
 
 ---
 

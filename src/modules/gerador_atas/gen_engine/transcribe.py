@@ -58,8 +58,19 @@ def _load_models_lazy():
             language_code="pt", device=device
         )
     if _WHISPER_MODELS["diarize_model"] is None:
+        hf_token = os.getenv("HF_KEY")
+        if not hf_token:
+            logger.warning("HF_KEY (Hugging Face Token) não encontrado. A diarização pode falhar em modelos privados.")
+        
         logger.info("Carregando pipeline de Diarização na VRAM...")
-        _WHISPER_MODELS["diarize_model"] = DiarizationPipeline(token=os.getenv("HF_KEY"), device=device)
+        try:
+            _WHISPER_MODELS["diarize_model"] = DiarizationPipeline(token=hf_token, device=device)
+        except Exception as e:
+            logger.error(f"Falha ao carregar DiarizationPipeline: {e}")
+            if "AutoModel" in str(e):
+                logger.error("Dica: Este erro geralmente indica termos de uso não aceitos no Hugging Face "
+                             "ou falta da biblioteca 'accelerate'. Verifique os requisitos do modelo.")
+            raise RuntimeError(f"Erro ao inicializar Diarização: {e}")
 
 async def transcribeX(audio_file: str) -> tuple[str, float]:
     """
