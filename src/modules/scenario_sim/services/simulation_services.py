@@ -113,18 +113,7 @@ async def run_simulation_generation_task(
             db.query(Simulation).filter(Simulation.id == simulation_id).first()
         )
         
-        full_pitch = (
-            f"Pitch: {pitch}\n\n"
-            f"Objetivos de aprendizagem:\n" + "\n".join([f"- {obj}" for obj in objectives]) + "\n\n"
-            f"Configurações da simulação:\n"
-            f"- Quantidade de estudantes: {student_ammount}\n"
-            f"- Quantidade de atores: {actors_ammount}\n"
-            f"- Uso de simulador: {'Sim' if uses_simulator else 'Não'}\n"
-        )
-        if simulator_description:
-            full_pitch += f"- Descrição do simulador: {simulator_description}\n"
-            
-        scenario_data = await generate(full_pitch)
+        scenario_data = await generate(pitch)
 
         new_simulation.scene_organization = scenario_data.scene_organization
         new_simulation.learning_objectives = scenario_data.learning_objectives
