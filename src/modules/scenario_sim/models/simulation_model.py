@@ -76,6 +76,9 @@ class Simulation(Base):
     materials = relationship(
         "Material", back_populates="simulation", cascade="all, delete-orphan"
     )
+    evaluations = relationship(
+        "Evaluation", back_populates="simulation", cascade="all, delete-orphan"
+    )
 
     def to_scenario(self):
         return Scenario(

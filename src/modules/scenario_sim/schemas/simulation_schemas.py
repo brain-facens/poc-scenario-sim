@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel
+from modules.scenario_sim.schemas.evaluation_schema import EvaluationResponse
 
 
 class SimulationInputCreate(BaseModel):
@@ -76,6 +77,7 @@ class SimulationFullRead(BaseModel):
     actors: list[ActorRead] = []
     scenes: list[SceneRead] = []
     materials: list[MaterialRead] = []
+    evaluations: list[EvaluationResponse] = []
 
     created_at: datetime
     updated_at: datetime | None = None

@@ -22,10 +22,15 @@ from modules.scenario_sim.models.simulation_model import Simulation
 from modules.scenario_sim.models.material_model import Material
 from modules.scenario_sim.models.actor_model import Actor
 from modules.scenario_sim.models.scene_model import Scene
+from modules.scenario_sim.models.evaluation_model import Evaluation
 
 # Ata generation module models
 from modules.gerador_atas.models.ata_model import AtaModel
 from modules.gerador_atas.models.ata_model import TranscricaoModel
+
+# Logging module models
+from modules.logging.models.request_log_model import RequestLog
+from modules.logging.models.daily_stats_model import DailyStats
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

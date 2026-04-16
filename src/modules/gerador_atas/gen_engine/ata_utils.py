@@ -18,32 +18,42 @@ _PREPOSICOES = {"de", "da", "do", "das", "dos", "e"}
 
 
 def _ano_por_extenso(ano: int) -> str:
-    """
-    Convert a year number to its Portuguese word representation.
-    
-    Args:
-        ano (int): The year number to convert
-        
-    Returns:
-        str: The year in Portuguese words
-        
-    Example:
-        >>> _ano_por_extenso(2023)
-        'vinte e três'
-    """
     dezenas_map = {
-        0: "zero",    1: "dez",      2: "vinte",    3: "trinta",   4: "quarenta",
+        0: "",         1: "dez",      2: "vinte",    3: "trinta",   4: "quarenta",
         5: "cinquenta", 6: "sessenta", 7: "setenta", 8: "oitenta", 9: "noventa",
     }
     unidades_map = {
         0: "",      1: "um",    2: "dois",  3: "três",  4: "quatro",
         5: "cinco", 6: "seis",  7: "sete",  8: "oito",  9: "nove",
     }
-    dezena  = (ano % 100) // 10
-    unidade = ano % 10
-    if unidade == 0:
-        return dezenas_map[dezena]
-    return f"{dezenas_map[dezena]} e {unidades_map[unidade]}"
+
+    milhares = ano // 1000
+    resto    = ano % 1000
+    centenas = resto // 100
+    dezena   = (resto % 100) // 10
+    unidade  = resto % 10
+
+    partes = []
+
+    if milhares:
+        partes.append("dois mil" if milhares == 2 else f"{unidades_map[milhares]} mil")
+
+    if centenas:
+        centenas_map = {
+            1: "cento", 2: "duzentos", 3: "trezentos", 4: "quatrocentos",
+            5: "quinhentos", 6: "seiscentos", 7: "setecentos",
+            8: "oitocentos", 9: "novecentos",
+        }
+        partes.append(centenas_map[centenas])
+
+    if dezena and unidade:
+        partes.append(f"{dezenas_map[dezena]} e {unidades_map[unidade]}")
+    elif dezena:
+        partes.append(dezenas_map[dezena])
+    elif unidade:
+        partes.append(unidades_map[unidade])
+
+    return " e ".join(partes)
 
 
 def _parse_hora(horario: str) -> tuple:
@@ -98,6 +108,8 @@ def _to_list(v):
         >>> _to_list('item1')
         ['item1']
     """
+    if v is None:
+        return []
     if isinstance(v, list):
         return v
     if isinstance(v, str):
@@ -182,6 +194,10 @@ def normalizar_lista_participantes(raw: str) -> list[str]:
         >>> normalizar_lista_participantes("joão da silva\\nmaria dos santos")
         ['João da Silva', 'Maria dos Santos']
     """
-    separador = "\n" if "\n" in raw else ","
-    itens = [i.strip() for i in raw.split(separador) if i.strip()]
+    import re
+    if "\n" in raw:
+        itens = [i.strip() for i in raw.split("\n") if i.strip()]
+    else:
+        itens = [i.strip() for i in re.split(r',|\s+e\s+', raw) if i.strip()]
+        
     return [normalizar_participante(i) for i in itens]
