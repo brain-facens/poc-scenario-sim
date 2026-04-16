@@ -79,6 +79,7 @@ class SceneRead(BaseModel):
 class SimulationFullRead(BaseModel):
     id: str
     simulation_input_id: str
+    simulation_input: Optional[SimulationInputRead] = None
     learning_objectives: str | None
     status: str
     pdf_status: str
