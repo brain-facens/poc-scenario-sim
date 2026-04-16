@@ -10,6 +10,10 @@ class SimulationInput(Base):
 
     id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     pitch = Column(String, index=True, nullable=False)
+    local_aula = Column(String, nullable=False)
+    nome_cenario = Column(String, nullable=False)
+    cursos = Column(String, nullable=False)
+    componente_curricular = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

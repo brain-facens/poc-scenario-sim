@@ -30,7 +30,13 @@ async def create_simulation_input_service(
     Creates a new SimulationInput record and populates the simulation
     tables with generated data from the LLM.
     """
-    db_input = SimulationInput(pitch=input_data.pitch)
+    db_input = SimulationInput(
+        pitch=input_data.pitch,
+        local_aula=input_data.local_aula,
+        nome_cenario=input_data.nome_cenario,
+        cursos=input_data.cursos,
+        componente_curricular=input_data.componente_curricular
+    )
     db.add(db_input)
     db.commit()
     db.refresh(db_input)

@@ -7,11 +7,19 @@ from modules.scenario_sim.schemas.evaluation_schema import EvaluationResponse
 
 class SimulationInputCreate(BaseModel):
     pitch: str
+    local_aula: str
+    nome_cenario: str
+    cursos: str
+    componente_curricular: str
 
 
 class SimulationInputRead(BaseModel):
     id: str
     pitch: str
+    local_aula: str
+    nome_cenario: str
+    cursos: str
+    componente_curricular: str
     created_at: datetime
     updated_at: datetime | None = None
 
