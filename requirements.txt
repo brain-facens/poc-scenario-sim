@@ -30,6 +30,10 @@ torch
 numpy
 openai-whisper
 whisperx
+transformers>=4.40.0
+accelerate
+huggingface-hub
+pyannote.audio
 
 # HTTP Clients
 requests
