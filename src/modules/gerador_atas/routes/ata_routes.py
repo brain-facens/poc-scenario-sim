@@ -1,17 +1,16 @@
 import os
-
 from typing import Optional
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status, Depends, Query
-from fastapi.responses import Response
-from sqlalchemy.orm import Session
-from database import get_db
 
-from modules.gerador_atas.schemas.ata_schemas import TranscricaoResponse, AtaData
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from sqlalchemy.orm import Session
+
 from core.pagination import PaginatedResponse
+from database import get_db
+from modules.gerador_atas.schemas.ata_schemas import AtaData, TranscricaoResponse
 from modules.gerador_atas.services.ata_services import (
     create_ata_queue_service,
-    transcrever_audio_service,
     get_atas_service,
+    transcrever_audio_service,
 )
 
 atas_router = APIRouter(prefix="/atas", tags=["atas"])
@@ -62,16 +61,16 @@ async def transcrever_audio(file: UploadFile = File(...), db: Session = Depends(
 
 
 from fastapi import BackgroundTasks
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse
+
 from modules.gerador_atas.models.ata_model import TranscricaoModel
+
 
 @atas_router.post("/gerar-doc", response_model=AtaData)
 async def gerar_ata_doc(
     background_tasks: BackgroundTasks,
-    # Meeting transcript — either pasted text OR an uploaded audio file
     transcricao:     str        = Form(""),
     file:            UploadFile = File(None),
-    # Manual meeting metadata
     numero_ata:      str        = Form(...),
     orgao:           str        = Form(...),
     sala:            str        = Form(...),
@@ -84,35 +83,29 @@ async def gerar_ata_doc(
     info_adicional:  str        = Form(""),
     db: Session = Depends(get_db),
 ):
-    """
-    Starts an ATA generation task in the background.
-    """
-    # --- Resolve transcription ---
     transcricao_id = None
+    audio_bytes = None
+    audio_suffix = ".wav"
+
     if transcricao.strip():
-        # User provided text directly. Need to save as TranscricaoModel
+        # Texto colado diretamente — salva já e entra na fila normal
         t_model = TranscricaoModel(transcricao=transcricao.strip(), elapsed_seconds=0.0)
         db.add(t_model)
         db.commit()
         db.refresh(t_model)
         transcricao_id = t_model.id
+
     elif file is not None:
-        content = await file.read()
-        suffix = os.path.splitext(file.filename or ".wav")[1] or ".wav"
-        try:
-            _, _, transcricao_id = await transcrever_audio_service(db, content, suffix=suffix)
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Transcription failed: {exc}",
-            )
+        # Áudio: lê os bytes aqui (antes de retornar), mas NÃO transcreve ainda
+        audio_bytes = await file.read()
+        audio_suffix = os.path.splitext(file.filename or ".wav")[1] or ".wav"
+
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Envie a transcrição ou um arquivo de áudio.",
         )
 
-    # --- Generate DOCX queue task ---
     try:
         ata_record = await create_ata_queue_service(
             db=db,
@@ -127,7 +120,9 @@ async def gerar_ata_doc(
             condutor=condutor,
             secretario=secretario,
             info_adicional=info_adicional,
-            transcricao_id=transcricao_id,
+            transcricao_id=transcricao_id,   # None se veio áudio
+            audio_bytes=audio_bytes,          # bytes se veio áudio
+            audio_suffix=audio_suffix,
         )
     except Exception as exc:
         raise HTTPException(
@@ -135,7 +130,7 @@ async def gerar_ata_doc(
             detail=f"ATA generation failed: {exc}",
         )
 
-    return ata_record
+    return ata_record  # retorna imediatamente com status TRANSCRIBING ou DOING/STALE
 
 
 @atas_router.get("/{ata_id}", response_model=AtaData)
