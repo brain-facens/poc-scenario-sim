@@ -5,8 +5,8 @@ import time
 import torch
 import whisperx
 from dotenv import find_dotenv, load_dotenv
-from whisperx.diarize import DiarizationPipeline
 from openai import AsyncOpenAI
+from whisperx.diarize import DiarizationPipeline
 
 _ = load_dotenv(dotenv_path=find_dotenv())
 
@@ -30,7 +30,12 @@ _WHISPER_MODELS = {
 }
 
 # Semaphore to strictly allow exactly 1 concurrent GPU inference
-_whisper_lock = asyncio.Semaphore(1)
+# Adicione isso no lugar:
+import concurrent.futures
+
+# Executor com 1 worker = garante que só 1 job GPU roda por vez, em qualquer contexto
+_whisper_executor = concurrent.futures.ThreadPoolExecutor(max_workers=1, thread_name_prefix="whisper")
+
 
 
 def _load_models_lazy():
@@ -72,56 +77,57 @@ def _load_models_lazy():
                              "ou falta da biblioteca 'accelerate'. Verifique os requisitos do modelo.")
             raise RuntimeError(f"Erro ao inicializar Diarização: {e}")
 
-async def transcribeX(audio_file: str) -> tuple[str, float]:
-    """
-    Transcribes an audio file using WhisperX with speaker diarization.
-    Protected by purely sequential execution (asyncio.Semaphore) to avoid CUDA OOM.
-    """
+# Remova o _whisper_lock e _get_whisper_lock inteiros
+
+
+
+def _transcribeX_sync(audio_file: str) -> tuple[str, float]:
+    """Versão síncrona do transcribeX — roda no executor dedicado."""
     start_model = time.time()
     
-    async with _whisper_lock:
-        try:
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            batch_size = int(os.getenv("WHISPER_BATCH_SIZE", "1"))
-            
-            # Load if not loaded
-            _load_models_lazy()
-            
-            # Run inference synchronously within threadpool if needed, but since Torch is blocking,
-            # we are relying on lock to prevent crashes. A proper threadpool wrapping is ok but Semaphore rules.
-            audio = whisperx.load_audio(audio_file)
-            
-            result = _WHISPER_MODELS["model"].transcribe(audio, batch_size=batch_size, language="pt")
-            
-            result = whisperx.align(
-                result["segments"],
-                _WHISPER_MODELS["model_a"],
-                _WHISPER_MODELS["metadata"],
-                audio,
-                device,
-                return_char_alignments=False,
-            )
-            
-            diarize_segments = _WHISPER_MODELS["diarize_model"](audio)
-            result = whisperx.assign_word_speakers(diarize_segments, result)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    batch_size = int(os.getenv("WHISPER_BATCH_SIZE", "1"))
+    
+    _load_models_lazy()
+    
+    audio = whisperx.load_audio(audio_file)
+    result = _WHISPER_MODELS["model"].transcribe(audio, batch_size=batch_size, language="pt")
+    result = whisperx.align(
+        result["segments"],
+        _WHISPER_MODELS["model_a"],
+        _WHISPER_MODELS["metadata"],
+        audio,
+        device,
+        return_char_alignments=False,
+    )
+    diarize_segments = _WHISPER_MODELS["diarize_model"](audio)
+    result = whisperx.assign_word_speakers(diarize_segments, result)
 
-            linhas = []
-            for seg in result["segments"]:
-                start = seg.get("start", 0)
-                end = seg.get("end", 0)
-                speaker = seg.get("speaker", "UNKNOWN")
-                text = seg.get("text", "").strip()
-                linhas.append(f"[{start:.2f} - {end:.2f}] {speaker}: {text}")
+    linhas = []
+    for seg in result["segments"]:
+        start = seg.get("start", 0)
+        end = seg.get("end", 0)
+        speaker = seg.get("speaker", "UNKNOWN")
+        text = seg.get("text", "").strip()
+        linhas.append(f"[{start:.2f} - {end:.2f}] {speaker}: {text}")
 
-            transcricao_texto = "\n".join(linhas)
-            elapsed = time.time() - start_model
-            return transcricao_texto, elapsed
-        finally:
-            # Limpeza ativa para evitar VRAM fragmentation e CUDA OOM 
-            if device == "cuda":
-                gc.collect()
-                torch.cuda.empty_cache()
+    transcricao_texto = "\n".join(linhas)
+    elapsed = time.time() - start_model
 
+    if device == "cuda":
+        gc.collect()
+        torch.cuda.empty_cache()
+
+    return transcricao_texto, elapsed
+
+
+async def transcribeX(audio_file: str) -> tuple[str, float]:
+    """
+    Submete a transcrição ao executor dedicado (1 worker).
+    Garante execução sequencial na GPU independente de quantas tasks async existam.
+    """
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(_whisper_executor, _transcribeX_sync, audio_file)
 
 async def transcribe_api(audio_path: str) -> tuple[str, float]:
     if not os.path.exists(audio_path):

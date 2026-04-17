@@ -1,14 +1,16 @@
+import asyncio
 import os
 import tempfile
-import asyncio
 import traceback
 from datetime import datetime, timedelta, timezone
-from fastapi import BackgroundTasks
+from typing import Optional
 
 from dotenv import find_dotenv, load_dotenv
-from sqlalchemy.orm import Session
+from fastapi import BackgroundTasks
 from sqlalchemy import func
+from sqlalchemy.orm import Session
 
+from core.pagination import paginate_and_filter
 from modules.gerador_atas.gen_engine.ata_engine import estruturar_ata
 from modules.gerador_atas.gen_engine.ata_utils import (
     MESES,
@@ -17,10 +19,8 @@ from modules.gerador_atas.gen_engine.ata_utils import (
     normalizar_lista_participantes,
 )
 from modules.gerador_atas.gen_engine.docx_builder import gerar_ata_docx
-from modules.gerador_atas.models.ata_model import AtaModel, TranscricaoModel, AtaStatus
+from modules.gerador_atas.models.ata_model import AtaModel, AtaStatus, TranscricaoModel
 
-from typing import Optional
-from core.pagination import paginate_and_filter
 _ = load_dotenv(dotenv_path=find_dotenv())
 
 def get_atas_service(db: Session, page: int = 1, limit: int = 10, numero_ata: Optional[str] = None, tema: Optional[str] = None, status: Optional[str] = None):
@@ -37,6 +37,8 @@ def get_atas_service(db: Session, page: int = 1, limit: int = 10, numero_ata: Op
     )
 
 
+# Substitua create_ata_queue_service e adicione run_transcription_and_generate_task
+
 async def create_ata_queue_service(
     db: Session,
     background_tasks: BackgroundTasks,
@@ -50,7 +52,9 @@ async def create_ata_queue_service(
     condutor: str,
     secretario: str,
     info_adicional: str,
-    transcricao_id: str,
+    transcricao_id: Optional[str],      # None quando vier de áudio
+    audio_bytes: Optional[bytes] = None, # novo parâmetro
+    audio_suffix: str = ".wav",          # novo parâmetro
 ) -> AtaModel:
     hora_inicio, minutos_inicio = _parse_hora(hora_inicio_raw)
     hora_fim, minutos_fim = _parse_hora(hora_fim_raw)
@@ -63,11 +67,17 @@ async def create_ata_queue_service(
     participantes_list = normalizar_lista_participantes(participantes)
     ausentes_list = normalizar_lista_participantes(ausentes) if ausentes.strip() else []
 
-    active_exists = (
-        db.query(AtaModel).filter(AtaModel.status == AtaStatus.DOING).first()
-        is not None
-    )
-    initial_status = AtaStatus.STALE if active_exists else AtaStatus.DOING
+    # Se ainda não tem transcrição, começa como TRANSCRIBING (não entra na fila ainda)
+    # Se já tem transcrição (texto colado), usa lógica de fila normal
+    if transcricao_id is None:
+        initial_status = AtaStatus.TRANSCRIBING
+    else:
+        active_exists = (
+            db.query(AtaModel)
+            .filter(AtaModel.status.in_([AtaStatus.DOING, AtaStatus.TRANSCRIBING]))
+            .first() is not None
+        )
+        initial_status = AtaStatus.STALE if active_exists else AtaStatus.DOING
 
     ata_record = AtaModel(
         numero_ata=numero_ata,
@@ -92,21 +102,79 @@ async def create_ata_queue_service(
     db.commit()
     db.refresh(ata_record)
 
-    if initial_status == AtaStatus.DOING:
+    if initial_status == AtaStatus.TRANSCRIBING:
+        # Transcrição vem antes de tudo — task própria cuida do pipeline completo
+        background_tasks.add_task(
+            run_transcription_and_generate_task,
+            ata_record.id,
+            audio_bytes,
+            audio_suffix,
+        )
+    elif initial_status == AtaStatus.DOING:
         background_tasks.add_task(run_ata_generation_task, ata_record.id)
 
     return ata_record
 
 
-async def run_ata_generation_task(ata_id: str):
+async def run_transcription_and_generate_task(
+    ata_id: str,
+    audio_bytes: bytes,
+    audio_suffix: str,
+):
     from database import SessionLocal
+    from fastapi.concurrency import run_in_threadpool
+
     db = SessionLocal()
     try:
         ata_record = db.query(AtaModel).filter(AtaModel.id == ata_id).first()
         if not ata_record:
             return
 
-        trans_record = db.query(TranscricaoModel).filter(TranscricaoModel.id == ata_record.transcricao_id).first()
+        # ✅ Transcrição também em thread separada
+        _, _, transcricao_id = await run_in_threadpool(
+            lambda: asyncio.run(
+                transcrever_audio_service(db, audio_bytes, suffix=audio_suffix)
+            )
+        )
+
+        ata_record.transcricao_id = transcricao_id
+
+        active_exists = (
+            db.query(AtaModel)
+            .filter(AtaModel.id != ata_id, AtaModel.status == AtaStatus.DOING)
+            .first() is not None
+        )
+        ata_record.status = AtaStatus.STALE if active_exists else AtaStatus.DOING
+        db.commit()
+
+        if ata_record.status == AtaStatus.DOING:
+            # ✅ Dispara como task separada, não bloqueia
+            asyncio.create_task(run_ata_generation_task(ata_id))
+
+    except Exception:
+        db.rollback()
+        ata = db.query(AtaModel).filter(AtaModel.id == ata_id).first()
+        if ata:
+            ata.status = AtaStatus.INTERRUPTED
+            ata.error = traceback.format_exc()
+            db.commit()
+    finally:
+        db.close()
+
+async def run_ata_generation_task(ata_id: str):
+    from fastapi.concurrency import run_in_threadpool
+
+    from database import SessionLocal
+    
+    db = SessionLocal()
+    try:
+        ata_record = db.query(AtaModel).filter(AtaModel.id == ata_id).first()
+        if not ata_record:
+            return
+
+        trans_record = db.query(TranscricaoModel).filter(
+            TranscricaoModel.id == ata_record.transcricao_id
+        ).first()
         transcricao = trans_record.transcricao if trans_record else ""
 
         dados_manuais = {
@@ -127,15 +195,16 @@ async def run_ata_generation_task(ata_id: str):
             "info_adicional":  ata_record.info_adicional or "",
         }
 
-        # --- LLM pipeline ---
-        llm_data = await estruturar_ata(transcricao, dados_manuais)
+        
+        llm_data = await run_in_threadpool(
+            lambda: asyncio.run(estruturar_ata(transcricao, dados_manuais))
+        )
 
         ata_record.tema = llm_data.get("tema", "")
         ata_record.resumo = llm_data.get("resumo", "")
         ata_record.assuntos_discutidos = "; ".join(llm_data.get("assuntos_discutidos", []))
         ata_record.deliberacoes = "; ".join(llm_data.get("deliberacoes", []))
 
-        # --- Build DOCX ---
         participantes_list = [p.strip() for p in ata_record.participantes.split(";") if p.strip()]
         docx_bytes = gerar_ata_docx(
             numero_ata=ata_record.numero_ata,
@@ -151,11 +220,10 @@ async def run_ata_generation_task(ata_id: str):
             participantes=participantes_list,
         )
 
-        # Save DOCX to file
         os.makedirs("media/atas", exist_ok=True)
         filename = f"ATA_{ata_record.numero_ata.replace('/', '-')}_{ata_record.id}.docx"
         file_path = os.path.join("media", "atas", filename)
-        
+
         with open(file_path, "wb") as f:
             data = docx_bytes.getvalue() if hasattr(docx_bytes, 'getvalue') else docx_bytes
             f.write(data)
@@ -165,6 +233,9 @@ async def run_ata_generation_task(ata_id: str):
         ata_record.updated_at = func.now()
         db.commit()
 
+        
+        await process_stale_ata_queue(db)
+
     except Exception:
         db.rollback()
         ata = db.query(AtaModel).filter(AtaModel.id == ata_id).first()
@@ -172,9 +243,12 @@ async def run_ata_generation_task(ata_id: str):
             ata.status = AtaStatus.INTERRUPTED
             ata.error = traceback.format_exc()
             db.commit()
+        try:
+            await process_stale_ata_queue(db)
+        except Exception:
+            pass
     finally:
         db.close()
-
 
 def get_ata_by_id_service(db: Session, ata_id: str):
     return db.query(AtaModel).filter(AtaModel.id == ata_id).first()
@@ -217,7 +291,7 @@ async def process_stale_ata_queue(db: Session):
         next_item.status = AtaStatus.DOING
         db.commit()
 
-        asyncio.create_task(run_ata_generation_task(next_item.id))
+        await run_ata_generation_task(next_item.id)
         return next_item.id
 
     return None

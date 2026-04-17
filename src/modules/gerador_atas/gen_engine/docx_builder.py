@@ -135,6 +135,26 @@ def p_deliberacao(texto):
     )
 
 
+def p_titulo_assinaturas():
+    """Título 'Assinaturas:' com quebra de página ANTES, mas só se necessário."""
+    rpr = (
+        '<w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>'
+        '<w:b/><w:bCs/><w:sz w:val="24"/><w:szCs w:val="24"/>'
+        '<w:lang w:val="pt-BR"/></w:rPr>'
+    )
+    return (
+        '<w:p>'
+        '<w:pPr>'
+        '<w:pageBreakBefore/>'          # quebra só se não estiver no topo
+        '<w:spacing w:line="360" w:lineRule="auto"/>'
+        f'<w:jc w:val="left"/>{rpr}'
+        '</w:pPr>'
+        f'<w:r>{rpr}<w:t>Assinaturas:</w:t></w:r>'
+        '</w:p>'
+    )
+
+
+
 def p_assinatura_tabela(participantes):
     """Tabela de assinaturas em duas colunas: linha tracejada + nome."""
     COL_W = 4638
@@ -288,8 +308,9 @@ def build_document_xml(
 
     # Assinaturas
     if participantes:
-        pars.append(p_page_break())
-        pars.append(p("Assinaturas:", bold=True, justify=False))
+        # pars.append(p_page_break())
+        # pars.append(p("Assinaturas:", bold=True, justify=False))
+        pars.append(p_titulo_assinaturas())
         pars.append(p(""))
         pars.append(p_assinatura_tabela(participantes))
 
