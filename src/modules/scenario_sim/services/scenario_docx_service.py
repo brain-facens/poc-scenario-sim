@@ -180,10 +180,30 @@ def build_table_xml(
         color = "#748fa3" if is_header else None
         tcpr_xml = tcpr(color)
         jc = "center" if is_header else "left"
+
+        # Handle line breaks properly - convert newlines to <w:br/> tags before escaping
+        if isinstance(texto, str):
+            # First, handle line breaks properly
+            processed_text = texto.replace("\n", "<w:br/>")
+            # Handle multiple consecutive newlines
+            processed_text = processed_text.replace("<w:br/></w:br/>", "<w:br/>")
+        else:
+            processed_text = str(texto) if texto is not None else ""
+            # Handle line breaks in non-string content
+            processed_text = processed_text.replace("\n", "<w:br/>")
+            # Handle multiple consecutive newlines
+            processed_text = processed_text.replace("<w:br/></w:br/>", "<w:br/>")
+
+        # Now escape the text for XML safety, but preserve <w:br/> tags
+        # We need to escape everything first, then restore the <w:br/> tags
+        escaped_text = escape(processed_text)
+        # Restore <w:br/> tags that should not be escaped
+        processed_text = escaped_text.replace("&lt;w:br/&gt;", "<w:br/>")
+
         return (
             f"<w:tc>{tcpr_xml}"
             f'<w:p><w:pPr><w:jc w:val="{jc}"/>{rp}</w:pPr>'
-            f"<w:r>{rp}<w:t>{escape(texto)}</w:t></w:r></w:p>"
+            f"<w:r>{rp}<w:t>{processed_text}</w:t></w:r></w:p>"
             "</w:tc>"
         )
 
@@ -212,6 +232,12 @@ def build_table_xml(
                 cell_content = (
                     content[j][i] if j < len(content) and i < len(content[j]) else ""
                 )
+
+            # Ensure cell_content is a string to properly handle line breaks
+            if cell_content is None:
+                cell_content = ""
+            elif not isinstance(cell_content, str):
+                cell_content = str(cell_content)
 
             row += celula(cell_content, is_header)
         row += "</w:tr>"
@@ -375,16 +401,17 @@ def build_scenario_document_xml(scenario: Scenario):
     # Case Presentation
     # Split case presentation into lines and create table
     pars.append(p(""))
-    lines = scenario.case_presentation.split("\n")
+    # lines = scenario.case_presentation.split("\n")
     table_content = []
     table_content.append(["Apresentação do Caso", ""])
-    for linha in lines:
-        linha = linha.strip()
-        if linha:  # Only add non-empty lines
-            if linha.startswith("- "):
-                table_content.append([linha[2:].strip(), ""])
-            else:
-                table_content.append([linha, ""])
+    table_content.append([scenario.case_presentation, ""])
+    # for linha in lines:
+    #     linha = linha.strip()
+    #     if linha:  # Only add non-empty lines
+    #         if linha.startswith("- "):
+    #             table_content.append([linha[2:].strip(), ""])
+    #         else:
+    #             table_content.append([linha, ""])
 
     if table_content:  # Only create table if there's content
         table_xml = build_table_xml(
@@ -440,12 +467,13 @@ def build_scenario_document_xml(scenario: Scenario):
 
     # Simulator Parameters
     pars.append(p(""))
-    lines = scenario.simulator_parameters.split("\n")
+    # lines = scenario.simulator_parameters.split("\n")
     table_content = []
     table_content.append(["Parâmetros do Simulador", ""])
-    simulator_parameters = " ".join(linha.strip() for linha in lines if linha.strip())
-    if simulator_parameters:
-        table_content.append([simulator_parameters, ""])
+    table_content.append([scenario.simulator_parameters, ""])
+    # simulator_parameters = " ".join(linha.strip() for linha in lines if linha.strip())
+    # if simulator_parameters:
+    #     table_content.append([simulator_parameters, ""])
 
     if table_content:
         table_xml = build_table_xml(
@@ -460,12 +488,13 @@ def build_scenario_document_xml(scenario: Scenario):
 
     # Simulator Evolution Parameters
     pars.append(p(""))
-    lines = scenario.simulator_evolution_parameters.split("\n")
+    # lines = scenario.simulator_evolution_parameters.split("\n")
     table_content = []
     table_content.append(["Parâmetros de Evolução do Simulador", ""])
-    simulator_evolution = " ".join(linha.strip() for linha in lines if linha.strip())
-    if simulator_evolution:
-        table_content.append([simulator_evolution, ""])
+    table_content.append([scenario.simulator_evolution_parameters, ""])
+    # simulator_evolution = " ".join(linha.strip() for linha in lines if linha.strip())
+    # if simulator_evolution:
+    #     table_content.append([simulator_evolution, ""])
 
     if table_content:
         table_xml = build_table_xml(
@@ -480,12 +509,13 @@ def build_scenario_document_xml(scenario: Scenario):
 
     # Students Briefing
     pars.append(p(""))
-    lines = scenario.students_briefing.split("\n")
+    # lines = scenario.students_briefing.split("\n")
     table_content = []
     table_content.append(["Briefing dos Estudantes", ""])
-    students_briefing = " ".join(linha.strip() for linha in lines if linha.strip())
-    if students_briefing:
-        table_content.append([students_briefing, ""])
+    table_content.append([scenario.students_briefing, ""])
+    # students_briefing = " ".join(linha.strip() for linha in lines if linha.strip())
+    # if students_briefing:
+    #     table_content.append([students_briefing, ""])
 
     if table_content:
         table_xml = build_table_xml(
@@ -532,12 +562,13 @@ def build_scenario_document_xml(scenario: Scenario):
 
     # Debriefing
     pars.append(p(""))
-    lines = scenario.debriefing.split("\n")
+    # lines = scenario.debriefing.split("\n")
     table_content = []
     table_content.append(["Debriefing", ""])
-    debriefing = " ".join(linha.strip() for linha in lines if linha.strip())
-    if debriefing:
-        table_content.append([debriefing, ""])
+    table_content.append([scenario.debriefing, ""])
+    # debriefing = " ".join(linha.strip() for linha in lines if linha.strip())
+    # if debriefing:
+    #     table_content.append([debriefing, ""])
 
     if table_content:
         table_xml = build_table_xml(
@@ -552,12 +583,13 @@ def build_scenario_document_xml(scenario: Scenario):
 
     # Appendix
     pars.append(p(""))
-    lines = scenario.appendix.split("\n")
+    # lines = scenario.appendix.split("\n")
     table_content = []
     table_content.append(["Anexo", ""])
-    appendix = " ".join(linha.strip() for linha in lines if linha.strip())
-    if appendix:
-        table_content.append([appendix, ""])
+    table_content.append([scenario.appendix, ""])
+    # appendix = " ".join(linha.strip() for linha in lines if linha.strip())
+    # if appendix:
+    #     table_content.append([appendix, ""])
 
     if table_content:
         table_xml = build_table_xml(

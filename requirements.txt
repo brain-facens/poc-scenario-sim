@@ -37,3 +37,4 @@ pyannote.audio
 
 # HTTP Clients
 requests
+python-docx==1.2.0

@@ -5,8 +5,8 @@ import time
 import torch
 import whisperx
 from dotenv import find_dotenv, load_dotenv
-from whisperx.diarize import DiarizationPipeline
 from openai import AsyncOpenAI
+from whisperx.diarize import DiarizationPipeline
 
 _ = load_dotenv(dotenv_path=find_dotenv())
 
