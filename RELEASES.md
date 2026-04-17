@@ -84,7 +84,7 @@ Para facilitar o rastreamento, utilize prefixos nos seus commits:
     *   Isso listará automaticamente todos os PRs e commits desde a última versão com base no nosso padrão.
 6.  Revise as notas e clique em **Publish release**.
 
-### Via Terminal (CLI)
+### Via Terminal - Controle de Versionamento para Tech Lead (CLI)
 Caso prefira o controle total via linha de comando:
 ```bash
 # 1. Vá para a main e puxe as novidades
@@ -106,3 +106,47 @@ git push origin v1.2.0
 *   **Testes na Develop:** Nunca promova código para a `main` se houver falhas críticas na `develop`. Reverter a `main` é muito mais custoso e arriscado.
 *   **Sincronização:** Mantenha sua branch sempre atualizada com a `develop`.
 *   **Status de Deploy:** Atualmente, a aplicação roda estritamente de forma **Local**. Não há deploy automatizado para nuvem (Vercel/Render) configurado.
+
+---
+
+## 🛠️ 5. Guia Prático: Do Desenvolvimento ao PR
+
+Este guia rápido ajuda você a seguir o Gitflow do **BRAIN** sem erros.
+
+### 1. Criando sua Branch - Para Devs
+Sempre parta da `develop` para novas funcionalidades:
+```bash
+git checkout develop
+git pull origin develop       # Garanta que está atualizado
+git checkout -b feat-nome-da-task
+```
+
+### 2. Padronizando seus Commits
+Siga fielmente os prefixos. Exemplos reais:
+
+| Tipo | Exemplo de Comando | O que mudou? |
+| :--- | :--- | :--- |
+| **Feature** | `git commit -m "feat: add support for audio streaming"` | Novo recurso adicionado. |
+| **Fix** | `git commit -m "fix: resolve memory leak in whisper loop"` | Correção de bug existente. |
+| **Docs** | `git commit -m "docs: update API endpoints in README"` | Alteração apenas em documentação. |
+| **Refactor** | `git commit -m "refactor: optimize database query logic"` | Melhoria de código sem mudar comportamento. |
+
+### 3. Mantendo-se Atualizado (Sincronização)
+Se a `develop` mudou enquanto você trabalhava, atualize sua branch para evitar conflitos no PR:
+```bash
+git fetch origin
+git merge origin/develop
+# Resolva conflitos se houver, salve e commite.
+```
+
+### 4. Abrindo o Pull Request para Code Review
+1. Faça o push da sua branch: `git push origin feat-nome-da-task`.
+2. No GitHub, clique em **"Compare & pull request"**.
+3. **Reviewers:** Marque obrigatoriamente o **Tech Lead** e o **Dev Integrador**.
+4. **Base:** Certifique-se de que a base é `develop` (para novos recursos) ou `main` (apenas se for release guiada).
+
+### ✅ Checklist PR-Ready (Antes de avisar o time)
+- [ ] O código roda localmente sem erros?
+- [ ] Os commits seguem o padrão `prefixo: descrição`?
+- [ ] Removi `print()` de debug e comentários desnecessários?
+- [ ] Minha branch está sincronizada com a `develop` mais recente?

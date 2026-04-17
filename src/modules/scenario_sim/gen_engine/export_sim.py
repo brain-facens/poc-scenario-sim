@@ -4,9 +4,12 @@ from datetime import datetime
 from agents import Runner, RunResult
 from weasyprint import HTML
 
+from modules.scenario_sim.create_scenario_docx import DocxExporter
+
+# from modules.scenario_sim.gen_engine.docx_generator import DocxGenerator
+# from modules.scenario_sim.services.scenario_docx_service import save_scenario_docx
 from modules.scenario_sim.gen_engine.gen_parts.scenario import Scenario
 from modules.scenario_sim.gen_engine.sim_agents.html_agent import html_agent
-from modules.scenario_sim.services.scenario_docx_service import save_scenario_docx
 
 
 def path_builder(*, format: str = ".pdf") -> str:
@@ -38,4 +41,7 @@ async def export_pdf(scenario: Scenario) -> str:
 
 async def export_docx(scenario: Scenario) -> str:
     abs_path = path_builder(format=".docx")
-    return save_scenario_docx(scenario, abs_path)
+    docx = DocxExporter()
+    return docx.create_scenario_docx(scenario, abs_path)
+    # docx = DocxGenerator()
+    # return docx.generate(scenario, abs_path)

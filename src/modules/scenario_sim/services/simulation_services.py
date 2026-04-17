@@ -246,7 +246,7 @@ def get_all_simulation_ids_service(db: Session, page: int = 1, limit: int = 10, 
     )
 
 
-def cleanup_timed_out_simulations(db: Session, timeout_minutes: int = 3):
+def cleanup_timed_out_simulations(db: Session, timeout_minutes: int = 5):
     now = datetime.now(timezone.utc)
     threshold = now - timedelta(minutes=timeout_minutes)
     print(
