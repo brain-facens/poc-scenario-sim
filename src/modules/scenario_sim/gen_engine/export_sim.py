@@ -1,11 +1,8 @@
 import os
 from datetime import datetime
 
-from agents import Runner, RunResult
-
 from modules.scenario_sim.gen_engine.docx_generator import DocxGenerator
 from modules.scenario_sim.gen_engine.gen_parts.scenario import Scenario
-from modules.scenario_sim.gen_engine.sim_agents.html_agent import html_agent
 
 
 def path_builder(*, format: str = ".pdf") -> str:
