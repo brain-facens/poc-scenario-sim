@@ -147,6 +147,11 @@ Se não houver deliberações identificáveis, retorne:
 ## FORMATO DE SAÍDA
 1. [Frase completa e objetiva.]
 2. [Frase completa e objetiva.]
+                                                   
+## EXEMPLO DE SAÍDA
+1. Ficou deliberado que Cristina será responsável pelo compartilhamento, junto à equipe, dos novos valores de mercado, com prazo até sexta-feira.
+2. Foi acordado que Rogério será responsável pela análise do crescimento da empresa, sem prazo explicitado na transcriçao.
+                                                                                                   
 """)
 
 PROMPT_VALIDADOR = PromptTemplate.from_template("""
@@ -208,4 +213,4 @@ JSON válido, sem markdown:
     "Foi solicitado que..."
   ]
 }}
-""")
+""")                                                   
