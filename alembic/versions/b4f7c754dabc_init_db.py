@@ -1,8 +1,8 @@
 """init db
 
-Revision ID: 18c61895d021
+Revision ID: b4f7c754dabc
 Revises: 
-Create Date: 2026-04-15 09:46:19.930182
+Create Date: 2026-04-22 09:41:24.717348
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '18c61895d021'
+revision: str = 'b4f7c754dabc'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -64,6 +64,14 @@ def upgrade() -> None:
     op.create_table('simulation_inputs',
     sa.Column('id', sa.String(length=36), nullable=False),
     sa.Column('pitch', sa.String(), nullable=False),
+    sa.Column('local_aula', sa.String(), nullable=False),
+    sa.Column('nome_cenario', sa.String(), nullable=False),
+    sa.Column('cursos', sa.String(), nullable=False),
+    sa.Column('componente_curricular', sa.String(), nullable=False),
+    sa.Column('student_ammount', sa.Integer(), nullable=False),
+    sa.Column('actors_ammount', sa.Integer(), nullable=False),
+    sa.Column('uses_simulator', sa.Boolean(), nullable=False),
+    sa.Column('simulator_description', sa.Text(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.PrimaryKeyConstraint('id')
@@ -121,9 +129,9 @@ def upgrade() -> None:
     sa.Column('deliberacoes', sa.Text(), nullable=True),
     sa.Column('info_adicional', sa.Text(), nullable=True),
     sa.Column('transcricao_id', sa.String(length=36), nullable=True),
-    sa.Column('status', sa.Enum('COMPLETE', 'DOING', 'INTERRUPTED', 'STALE', name='atastatus'), nullable=False),
+    sa.Column('status', sa.Enum('COMPLETE', 'DOING', 'INTERRUPTED', 'STALE', 'TRANSCRIBING', name='atastatus'), nullable=False),
     sa.Column('file_path', sa.String(length=255), nullable=True),
-    sa.Column('error', sa.String(), nullable=True),
+    sa.Column('error', sa.Text(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['transcricao_id'], ['transcricoes.id'], ),
@@ -133,6 +141,16 @@ def upgrade() -> None:
     with op.batch_alter_table('atas', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_atas_id'), ['id'], unique=False)
         batch_op.create_index(batch_op.f('ix_atas_numero_ata'), ['numero_ata'], unique=False)
+
+    op.create_table('simulation_input_objectives',
+    sa.Column('id', sa.String(length=36), nullable=False),
+    sa.Column('description', sa.Text(), nullable=False),
+    sa.Column('simulation_input_id', sa.String(length=36), nullable=False),
+    sa.ForeignKeyConstraint(['simulation_input_id'], ['simulation_inputs.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    with op.batch_alter_table('simulation_input_objectives', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_simulation_input_objectives_id'), ['id'], unique=False)
 
     op.create_table('simulations',
     sa.Column('id', sa.String(length=36), nullable=False),
@@ -248,6 +266,10 @@ def downgrade() -> None:
         batch_op.drop_index(batch_op.f('ix_simulations_id'))
 
     op.drop_table('simulations')
+    with op.batch_alter_table('simulation_input_objectives', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_simulation_input_objectives_id'))
+
+    op.drop_table('simulation_input_objectives')
     with op.batch_alter_table('atas', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_atas_numero_ata'))
         batch_op.drop_index(batch_op.f('ix_atas_id'))

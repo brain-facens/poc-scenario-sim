@@ -209,6 +209,16 @@ Para realizar uma migração limpa em ambiente de **DESENVOLVIMENTO**, siga este
    alembic upgrade head
    ```
 
+#### Alternativa Automática:
+
+com o Ambiente Python ativo e dependências instaladas, Rodar na root:
+
+```bash
+python scripts/db_reset.py
+```
+
+Script executa processo completo automaticamente
+
 > ⚠️ **Nota:** Este procedimento apaga todos os dados locais. Use apenas enquanto a estrutura do banco estiver mudando drasticamente dia após dia.
 
 ---

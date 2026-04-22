@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from starlette.responses import FileResponse
 
 from database import get_db
+from modules.scenario_sim.models import SimulationInput
 from modules.scenario_sim.schemas.simulation_schemas import (
     SimulationFullRead,
     SimulationInputCreate,
@@ -113,6 +114,17 @@ def get_simulations_by_input(input_id: str, db: Session = Depends(get_db)):
     linked to the provided SimulationInput ID.
     """
     return get_simulations_by_input_id_service(db, simulation_input_id=input_id)
+
+
+@simulation_router.get("/input/{input_id}", response_model=SimulationInputRead)
+def get_simulation_input(input_id: str, db: Session = Depends(get_db)):
+    """
+    Returns the details of a specific SimulationInput.
+    """
+    db_input = db.query(SimulationInput).filter(SimulationInput.id == input_id).first()
+    if not db_input:
+        raise HTTPException(status_code=404, detail="Simulation input not found")
+    return db_input
 
 
 @simulation_router.patch("/{simulation_id}", response_model=SimulationFullRead)

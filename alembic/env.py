@@ -17,7 +17,7 @@ from database import Base
 from modules.auth.models.user_model import User
 
 # Scenario sim module models
-from modules.scenario_sim.models.simulation_input_model import SimulationInput
+from modules.scenario_sim.models.simulation_input_model import SimulationInput, SimulationInputObjective
 from modules.scenario_sim.models.simulation_model import Simulation
 from modules.scenario_sim.models.material_model import Material
 from modules.scenario_sim.models.actor_model import Actor
