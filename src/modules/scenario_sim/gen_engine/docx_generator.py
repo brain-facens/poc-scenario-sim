@@ -118,48 +118,53 @@ class DocxGenerator:
 
         # Section: Course Information
         self._add_section(
-            "Course Information",
+            "ROTEIRO DE CENÁRIO DE SIMULAÇÃO",
             [
-                ["Dia e horário da aula", None],  # Placeholder: to be filled later
-                ["Local de realização da aula", None],
-                ["Nome do cenário", None],  # Placeholder: to be filled later
-                ["Tempo de duração", None],  # Placeholder: to be filled later
-                ["Curso(s)", None],  # Placeholder: to be filled later
-                ["Unidade curricular", None],  # Placeholder: to be filled later
-                ["Turma", None],  # Placeholder: to be filled later
-                ["Quantidade de estudantes", None],  # Placeholder: to be filled later
-                ["Professor", None],  # Placeholder: to be filled later
+                ["Dia e horário da aula:", None],  # Placeholder: to be filled later
+                ["Local de realização da aula:", None],
+                ["Nome do cenário:", None],  # Placeholder: to be filled later
+                ["Tempo de duração:", None],  # Placeholder: to be filled later
+                ["Curso(s):", None],  # Placeholder: to be filled later
+                ["Unidade curricular:", None],  # Placeholder: to be filled later
+                ["Turma:", None],  # Placeholder: to be filled later
+                ["Quantidade de estudantes:", None],  # Placeholder: to be filled later
+                ["Professor:", None],  # Placeholder: to be filled later
             ],
         )
         self.doc.add_paragraph()
 
         # Section: Learning Objectives
-        self._add_section("Learning Objectives", [[scenario.learning_objectives]])
+        self._add_section("Objetivos de Aprendizagem", [[scenario.learning_objectives]])
         self.doc.add_paragraph()
 
         # Section: Resources
         self._add_section(
-            "Resources",
+            "Recursos materiais necessários:",
             [[r.name, str(r.quantity)] for r in scenario.necessary_resources],
         )
         self.doc.add_paragraph()
 
         # Section: Scene Organization
-        self._add_section("Scene Organization", [[scenario.scene_organization]])
+        self._add_section(
+            "Organização do ambiente:",
+            [[scenario.scene_organization]],
+        )
         self.doc.add_paragraph()
 
         # Section: Participants
         participants = scenario.scene_participants
         uses_sim = "x" if participants.uses_simulator else " "
         self._add_section(
-            "Participants",
+            "Participantes do cenário",
             [
                 [
-                    f"Students quantity ({str(participants.students_quantity)})",
-                    f"Actors quantity ({str(participants.actors_quantity)})",
-                    f"Uses simulator({uses_sim})",
+                    "Participante:",
+                    f"Estudante ({str(participants.students_quantity)})",
+                    f"Ator ({str(participants.actors_quantity)})",
+                    f"Simulador ({uses_sim})",
                 ],
                 [
+                    "Função no cenário:",
                     participants.students_role,
                     participants.actors_role,
                     participants.simulator_role,
@@ -169,42 +174,46 @@ class DocxGenerator:
         self.doc.add_paragraph()
 
         # Section: Case Presentation
-        self._add_section("Case Presentation", [[scenario.case_presentation]])
+        self._add_section("Apresentação do caso", [[scenario.case_presentation]])
         self.doc.add_paragraph()
 
         # Section: Actor Briefings
         for idx, actor in enumerate(scenario.actor_briefing, start=1):
             self._add_section(
-                f"Actor Briefing {idx}",
+                f"Briefing do ator {idx}",
                 [
-                    ["Personal data", actor.personal_data],
-                    ["Current story", actor.current_story],
-                    ["Previous story", actor.previous_story],
-                    ["Clothing", actor.clothing],
-                    ["Behavior profile", actor.behavior_profile],
+                    ["Dados pessoais:", actor.personal_data],
+                    ["História atual:", actor.current_story],
+                    ["História prévia:", actor.previous_story],
+                    ["Vestimentas:", actor.clothing],
+                    ["Perfil de comportamento:", actor.behavior_profile],
                 ],
             )
             self.doc.add_paragraph()
 
         # Section: Simulator Parameters
-        self._add_section("Simulator Parameters", [[scenario.simulator_parameters]])
+        self._add_section(
+            "Programação do Simulador:", [[scenario.simulator_parameters]]
+        )
         self.doc.add_paragraph()
 
         # Section: Evolution Parameters
         self._add_section(
-            "Evolution Parameters",
+            "Programação evolutivos do simulador:",
             [[scenario.simulator_evolution_parameters]],
         )
         self.doc.add_paragraph()
 
         # Section: Students Briefing
-        self._add_section("Students Briefing", [[scenario.students_briefing]])
+        self._add_section(
+            "Briefing para os estudantes:", [[scenario.students_briefing]]
+        )
         self.doc.add_paragraph()
 
         # Section: Scene Flow
         for idx, scene in enumerate(scenario.scene_flow, start=1):
             self._add_section(
-                f"Scene {idx}",
+                f"Cena {idx}",
                 [
                     ["Plano A:", scene.student_plan_a],
                     ["Ator:", scene.actor_sim_directions],
@@ -214,11 +223,11 @@ class DocxGenerator:
             self.doc.add_paragraph()
 
         # Section: Debriefing
-        self._add_section("Debriefing", [[scenario.debriefing]])
+        self._add_section("Debriefing:", [[scenario.debriefing]])
         self.doc.add_paragraph()
 
         # Section: Appendix
-        self._add_section("Appendix", [[scenario.appendix]])
+        self._add_section("Anexos:", [[scenario.appendix]])
 
         # Save the final document
         self.doc.save(output_path)
