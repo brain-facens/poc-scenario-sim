@@ -22,7 +22,7 @@ class DocxGenerator:
     """
     Generates a DOCX document based on a Scenario model and a template.
     The generated document preserves the headers and footers of the template
-    and creates tables with black borders and light‑blue header shading where
+    and creates tables with black borders and light-blue header shading where
     applicable.
     """
 
@@ -58,83 +58,45 @@ class DocxGenerator:
 
         return Path(template_path)
 
-    @staticmethod
-    def _set_cell_shading(cell, rgb: RGBColor) -> None:
-        """
-        Apply a solid fill colour to a table cell.
-
-        Args:
-            cell: The docx cell to modify.
-            rgb: An RGB colour to use as the fill colour.
-        """
-        tc = cell._tc
-        tcPr = tc.get_or_add_tcPr()
-        shd = OxmlElement("w:shd")
-        # Use the RGB hex without the leading '#', upper‑cased
-        hex_colour = rgb.hex.lstrip("#").upper()
-        shd.set(qn("w:fill"), hex_colour)
-        tcPr.append(shd)
-
-    def _style_table(self, table) -> None:
-        """
-        Apply black borders to the table and light‑blue fill to header cells.
-
-        Args:
-            table: The docx table to style.
-        """
-        # Apply black borders to all cells
-        tbl = table._tbl
-        for tr in tbl.xpath(".//w:tr"):
-            tcPr = tr.get_or_add_tcPr()
-            tcBorders = OxmlElement("w:tcBorders")
-            for border_name in ("top", "left", "bottom", "right", "insideH", "insideV"):
-                border = OxmlElement(f"w:{border_name}")
-                border.set(qn("w:val"), "single")
-                border.set(qn("w:sz"), "4")
-                border.set(qn("w:space"), "0")
-                border.set(qn("w:color"), "000000")
-                tcPr.append(border)
-
-        # Light‑blue shading for the first row (header)
-        first_row = table.rows[0]
-        for cell in first_row.cells:
-            self._set_cell_shading(cell, RGBColor(173, 216, 230))  # Light blue
-
-    def _add_section(self, title: str, rows: List[tuple]) -> None:
+    def _add_section(self, title: str, rows: List[List[str | None]]) -> None:
         """
         Add a titled section to the document.
 
-        The section is rendered as a table where the first column contains the
-        row labels (e.g. "Objective:", "Quantity:") and the second column
-        contains the corresponding values. The first row of the table is used
-        as a header and receives light‑blue shading.
+        The section is rendered as a table where each row contains elements from the tuples in `rows`.
+        All cells will be merged for the title which will be placed at the top of the section.
+        Table style is set to "Unifacens".
 
         Args:
             title: Title to display at the top of the section.
-            rows: List of (label, value) pairs.
+            rows: List of lists, where each inner list represents a row in the table and
+                  each element in the inner list represents a cell value for that row.
         """
-        # Create a table with one row for the title and one row per data item
-        table = self.doc.add_table(rows=1 + len(rows), cols=2)
-        table.style = "Table Grid"
-        table.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        # Determine the number of columns based on the length of the first row (assuming all rows have the same length)
+        cols_count = len(rows[0]) if rows else 0
 
-        # Populate the title cell (spanning two columns)
+        # Create a table with the calculated dimensions
+        total_rows = 1 + len(rows)  # one for title and rest for data
+        table = self.doc.add_table(rows=total_rows, cols=cols_count)
+        table.style = "Unifacens"
+
+        # Populate the title cell (spanning all columns)
         title_cell = table.cell(0, 0)
-        title_cell.merge(table.cell(0, 1))
+        title_cells = [table.cell(0, col) for col in range(cols_count)]
+        for cell in title_cells:
+            if cell != title_cell:
+                title_cell.merge(cell)
+
         title_cell.text = title
         title_cell.paragraphs[0].runs[0].font.size = Pt(14)
         title_cell.paragraphs[0].runs[0].font.bold = True
-        title_cell.paragraphs[0].runs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        title_cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-        # Populate the remaining rows with label/value pairs
-        for i, (label, value) in enumerate(rows, start=1):
-            label_cell = table.cell(i, 0)
-            value_cell = table.cell(i, 1)
-            label_cell.text = str(label)
-            value_cell.text = str(value)
-
-        # Apply styling (borders, header shading)
-        self._style_table(table)
+        # Populate the data rows
+        for i, row in enumerate(rows):
+            start_row = 1 + i
+            for col_index, value in enumerate(row):
+                cell = table.cell(start_row, col_index)
+                cell.text = str(value)
 
     def generate(self, scenario: Scenario, output_path: str) -> str:
         """
@@ -144,115 +106,119 @@ class DocxGenerator:
             scenario: The Scenario model instance containing all data.
             output_path: Path where the generated DOCX should be written.
         """
+        # Clear all paragraphs and tables from self.doc
+        for para in list(self.doc.paragraphs):
+            p = para._element.getparent()
+            p.remove(para._element)
+
+        for table in list(self.doc.tables):
+            t = table._tbl
+            tbl_elm = t.getparent()
+            tbl_elm.remove(t)
+
         # Section: Course Information
         self._add_section(
             "Course Information",
             [
-                ("Dia e horário da aula", None),  # Placeholder: to be filled later
-                (
-                    "Local de realização da aula",
-                    None,
-                ),  # Placeholder: to be filled later
-                ("Nome do cenário", None),  # Placeholder: to be filled later
-                ("Tempo de duração", None),  # Placeholder: to be filled later
-                ("Curso(s)", None),  # Placeholder: to be filled later
-                ("Unidade curricular", None),  # Placeholder: to be filled later
-                ("Turma", None),  # Placeholder: to be filled later
-                ("Quantidade de estudantes", None),  # Placeholder: to be filled later
-                ("Professor", None),  # Placeholder: to be filled later
+                ["Dia e horário da aula", None],  # Placeholder: to be filled later
+                ["Local de realização da aula", None],
+                ["Nome do cenário", None],  # Placeholder: to be filled later
+                ["Tempo de duração", None],  # Placeholder: to be filled later
+                ["Curso(s)", None],  # Placeholder: to be filled later
+                ["Unidade curricular", None],  # Placeholder: to be filled later
+                ["Turma", None],  # Placeholder: to be filled later
+                ["Quantidade de estudantes", None],  # Placeholder: to be filled later
+                ["Professor", None],  # Placeholder: to be filled later
             ],
         )
+        self.doc.add_paragraph()
+
         # Section: Learning Objectives
-        self._add_section(
-            "Learning Objectives",
-            [("Objective", scenario.learning_objectives)],
-        )
+        self._add_section("Learning Objectives", [[scenario.learning_objectives]])
+        self.doc.add_paragraph()
 
         # Section: Resources
         self._add_section(
             "Resources",
-            [(r.name, r.quantity) for r in scenario.necessary_resources],
+            [[r.name, str(r.quantity)] for r in scenario.necessary_resources],
         )
+        self.doc.add_paragraph()
 
         # Section: Scene Organization
-        self._add_section(
-            "Scene Organization",
-            [("Description", scenario.scene_organization)],
-        )
+        self._add_section("Scene Organization", [[scenario.scene_organization]])
+        self.doc.add_paragraph()
 
         # Section: Participants
         participants = scenario.scene_participants
+        uses_sim = "x" if participants.uses_simulator else " "
         self._add_section(
             "Participants",
             [
-                ("Uses simulator", participants.uses_simulator),
-                ("Students quantity", participants.students_quantity),
-                ("Actors quantity", participants.actors_quantity),
-                ("Students role", participants.students_role),
-                ("Actors role", participants.actors_role),
-                ("Simulator role", participants.simulator_role),
+                [
+                    f"Students quantity ({str(participants.students_quantity)})",
+                    f"Actors quantity ({str(participants.actors_quantity)})",
+                    f"Uses simulator({uses_sim})",
+                ],
+                [
+                    participants.students_role,
+                    participants.actors_role,
+                    participants.simulator_role,
+                ],
             ],
         )
+        self.doc.add_paragraph()
 
         # Section: Case Presentation
-        self._add_section(
-            "Case Presentation",
-            [("Presentation", scenario.case_presentation)],
-        )
+        self._add_section("Case Presentation", [[scenario.case_presentation]])
+        self.doc.add_paragraph()
 
         # Section: Actor Briefings
         for idx, actor in enumerate(scenario.actor_briefing, start=1):
             self._add_section(
                 f"Actor Briefing {idx}",
                 [
-                    ("Personal data", actor.personal_data),
-                    ("Current story", actor.current_story),
-                    ("Previous story", actor.previous_story),
-                    ("Clothing", actor.clothing),
-                    ("Behavior profile", actor.behavior_profile),
+                    ["Personal data", actor.personal_data],
+                    ["Current story", actor.current_story],
+                    ["Previous story", actor.previous_story],
+                    ["Clothing", actor.clothing],
+                    ["Behavior profile", actor.behavior_profile],
                 ],
             )
+            self.doc.add_paragraph()
 
         # Section: Simulator Parameters
-        self._add_section(
-            "Simulator Parameters",
-            [("Parameters", scenario.simulator_parameters)],
-        )
+        self._add_section("Simulator Parameters", [[scenario.simulator_parameters]])
+        self.doc.add_paragraph()
 
         # Section: Evolution Parameters
         self._add_section(
             "Evolution Parameters",
-            [("Parameters", scenario.simulator_evolution_parameters)],
+            [[scenario.simulator_evolution_parameters]],
         )
+        self.doc.add_paragraph()
 
         # Section: Students Briefing
-        self._add_section(
-            "Students Briefing",
-            [("Briefing", scenario.students_briefing)],
-        )
+        self._add_section("Students Briefing", [[scenario.students_briefing]])
+        self.doc.add_paragraph()
 
         # Section: Scene Flow
         for idx, scene in enumerate(scenario.scene_flow, start=1):
             self._add_section(
                 f"Scene {idx}",
                 [
-                    ("Student Plan A", scene.student_plan_a),
-                    ("Actor Sim Directions", scene.actor_sim_directions),
-                    ("Actor Plan B", scene.actor_plan_b),
+                    ["Plano A:", scene.student_plan_a],
+                    ["Ator:", scene.actor_sim_directions],
+                    ["Plano B:", scene.actor_plan_b],
                 ],
             )
+            self.doc.add_paragraph()
 
         # Section: Debriefing
-        self._add_section(
-            "Debriefing",
-            [("Debriefing text", scenario.debriefing)],
-        )
+        self._add_section("Debriefing", [[scenario.debriefing]])
+        self.doc.add_paragraph()
 
         # Section: Appendix
-        self._add_section(
-            "Appendix",
-            [("Appendix text", scenario.appendix)],
-        )
+        self._add_section("Appendix", [[scenario.appendix]])
 
         # Save the final document
         self.doc.save(output_path)
