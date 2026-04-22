@@ -42,7 +42,38 @@ jobs:
         run: |
           if [ -z "$OPENAI_KEY" ]; then echo "Secret missing"; exit 1; fi
 
-      - name: Try to run app
+      - name: Background Start & Health Check
         run: |
           cd src
-          python app.py
+          # Start app in background
+          python app.py &
+          APP_PID=$!
+          
+          echo "Waiting for API to boot..."
+          
+          # Poll health route (max 30 seconds)
+          TIMEOUT=30
+          COUNT=0
+          UP=0
+          
+          while [ $COUNT -lt $TIMEOUT ]; do
+            if curl -s http://localhost:8000/general/status > /dev/null; then
+              echo "API is UP!"
+              UP=1
+              break
+            fi
+            echo "Still waiting..."
+            sleep 2
+            COUNT=$((COUNT+2))
+          done
+          
+          # Cleanup
+          kill $APP_PID
+          
+          if [ $UP -eq 1 ]; then
+            echo "Verification successful."
+            exit 0
+          else
+            echo "API failed to start in time."
+            exit 1
+          fi
