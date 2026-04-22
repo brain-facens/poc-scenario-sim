@@ -2,13 +2,25 @@ name: Python PR Check
 
 on:
   pull_request:
-    branches:
-      - main
-      - develop
+    branches: [main, develop]
 
 jobs:
   verify-app:
     runs-on: ubuntu-latest
+    
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      ALGORITHM: ${{ secrets.ALGORITHM }}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
+      OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+      HF_KEY: ${{ secrets.HF_KEY }}
+      BACKEND_MODE: ${{ secrets.BACKEND_MODE }}
+      TRANSCRIBE_BACKEND: ${{ secrets.TRANSCRIBE_BACKEND }}
+      WHISPER_MODEL_SIZE: ${{ secrets.WHISPER_MODEL_SIZE }}
+      WHISPER_COMPUTE_TYPE: ${{ secrets.WHISPER_COMPUTE_TYPE }}
+      WHISPER_BATCH_SIZE: ${{ secrets.WHISPER_BATCH_SIZE }}
+      LOCAL_URL: ${{ secrets.LOCAL_URL }}
 
     steps:
       - name: Checkout code
@@ -19,13 +31,15 @@ jobs:
         with:
           python-version: '3.11.14'
 
-      - name: Verify Python Version
-        run: python --version
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Verify Environment
+        run: |
+          # Check if key exists (not print value!)
+          if [ -z "$OPENAI_KEY" ]; then echo "Secret missing"; exit 1; fi
 
       - name: Try to run app
         run: |
