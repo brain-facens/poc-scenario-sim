@@ -1,8 +1,8 @@
 """init db
 
-Revision ID: 9b2a4bb60f0a
+Revision ID: b4f7c754dabc
 Revises: 
-Create Date: 2026-04-16 10:41:05.596251
+Create Date: 2026-04-22 09:41:24.717348
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '9b2a4bb60f0a'
+revision: str = 'b4f7c754dabc'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -129,9 +129,9 @@ def upgrade() -> None:
     sa.Column('deliberacoes', sa.Text(), nullable=True),
     sa.Column('info_adicional', sa.Text(), nullable=True),
     sa.Column('transcricao_id', sa.String(length=36), nullable=True),
-    sa.Column('status', sa.Enum('COMPLETE', 'DOING', 'INTERRUPTED', 'STALE', name='atastatus'), nullable=False),
+    sa.Column('status', sa.Enum('COMPLETE', 'DOING', 'INTERRUPTED', 'STALE', 'TRANSCRIBING', name='atastatus'), nullable=False),
     sa.Column('file_path', sa.String(length=255), nullable=True),
-    sa.Column('error', sa.String(), nullable=True),
+    sa.Column('error', sa.Text(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['transcricao_id'], ['transcricoes.id'], ),
