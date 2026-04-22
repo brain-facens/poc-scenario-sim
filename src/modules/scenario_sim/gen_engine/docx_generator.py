@@ -10,9 +10,7 @@ from typing import List
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
-from docx.shared import Pt, RGBColor
+from docx.shared import Pt
 
 # Import the generated Pydantic models
 from modules.scenario_sim.gen_engine.gen_parts.scenario import Scenario
