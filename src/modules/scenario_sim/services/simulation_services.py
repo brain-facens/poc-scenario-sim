@@ -2,7 +2,7 @@ import asyncio
 import traceback
 from datetime import datetime, timedelta, timezone
 
-from fastapi import BackgroundTasks
+from fastapi import BackgroundTasks, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -15,6 +15,7 @@ from modules.scenario_sim.models import (
     Scene,
     Simulation,
     SimulationInput,
+    SimulationInputObjective
 )
 from modules.scenario_sim.models.simulation_model import PdfStatus, SimulationStatus
 from modules.scenario_sim.schemas.simulation_schemas import (
@@ -30,8 +31,33 @@ async def create_simulation_input_service(
     Creates a new SimulationInput record and populates the simulation
     tables with generated data from the LLM.
     """
-    db_input = SimulationInput(pitch=input_data.pitch)
+    if not input_data.objectives or not (1 <= len(input_data.objectives) <= 3):
+        raise HTTPException(
+            status_code=400,
+            detail="Learning objectives must have between 1 and 3 items."
+        )
+
+    db_input = SimulationInput(
+        pitch=input_data.pitch,
+        local_aula=input_data.local_aula,
+        nome_cenario=input_data.nome_cenario,
+        cursos=input_data.cursos,
+        componente_curricular=input_data.componente_curricular,
+        student_ammount=input_data.student_ammount,
+        actors_ammount=input_data.actors_ammount,
+        uses_simulator=input_data.uses_simulator,
+        simulator_description=input_data.simulator_description
+    )
     db.add(db_input)
+    db.flush()  # To get db_input.id
+
+    for obj_desc in input_data.objectives:
+        db_obj = SimulationInputObjective(
+            description=obj_desc,
+            simulation_input_id=db_input.id
+        )
+        db.add(db_obj)
+
     db.commit()
     db.refresh(db_input)
 
@@ -52,6 +78,11 @@ async def create_simulation_input_service(
             db_input.id,
             new_simulation.id,
             input_data.pitch,
+            input_data.objectives,
+            input_data.student_ammount,
+            input_data.actors_ammount,
+            input_data.uses_simulator,
+            input_data.simulator_description
         )
 
     db.refresh(db_input)
@@ -59,7 +90,20 @@ async def create_simulation_input_service(
     return db_input
 
 
-async def run_simulation_generation_task(input_id: str, simulation_id: str, pitch: str):
+async def run_simulation_generation_task(
+    input_id: str, 
+    simulation_id: str, 
+    pitch: str, 
+    objectives: list[str] | list[SimulationInputObjective],
+    student_ammount: int,
+    actors_ammount: int,
+    uses_simulator: bool,
+    simulator_description: str | None
+):
+
+    if objectives and not isinstance(objectives[0], str):
+        objectives = [obj.description for obj in objectives]
+
     from database import SessionLocal
 
     db = SessionLocal()
@@ -68,6 +112,7 @@ async def run_simulation_generation_task(input_id: str, simulation_id: str, pitc
         new_simulation = (
             db.query(Simulation).filter(Simulation.id == simulation_id).first()
         )
+        
         scenario_data = await generate(pitch)
 
         new_simulation.scene_organization = scenario_data.scene_organization
@@ -201,7 +246,7 @@ def get_all_simulation_ids_service(db: Session, page: int = 1, limit: int = 10, 
     )
 
 
-def cleanup_timed_out_simulations(db: Session, timeout_minutes: int = 3):
+def cleanup_timed_out_simulations(db: Session, timeout_minutes: int = 5):
     now = datetime.now(timezone.utc)
     threshold = now - timedelta(minutes=timeout_minutes)
     print(
@@ -254,6 +299,11 @@ async def process_stale_queue(db: Session):
                 next_sim.simulation_input_id,
                 next_sim.id,
                 next_sim.simulation_input.pitch,
+                next_sim.simulation_input.objectives,
+                next_sim.simulation_input.student_ammount,
+                next_sim.simulation_input.actors_ammount,
+                next_sim.simulation_input.uses_simulator,
+                next_sim.simulation_input.simulator_description
             )
         )
         return next_sim.id
