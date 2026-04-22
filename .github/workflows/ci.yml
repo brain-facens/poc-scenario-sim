@@ -20,6 +20,8 @@ jobs:
       WHISPER_MODEL_SIZE: ${{ secrets.WHISPER_MODEL_SIZE }}
       WHISPER_COMPUTE_TYPE: ${{ secrets.WHISPER_COMPUTE_TYPE }}
       WHISPER_BATCH_SIZE: ${{ secrets.WHISPER_BATCH_SIZE }}
+      VECTOR_STORE: ${{ secrets.VECTOR_STORE }}
+      LOCAL_MODEL: ${{ secrets.LOCAL_MODEL }
       LOCAL_URL: ${{ secrets.LOCAL_URL }}
 
     steps:
