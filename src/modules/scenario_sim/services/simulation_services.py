@@ -6,7 +6,7 @@ from fastapi import BackgroundTasks, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from modules.scenario_sim.gen_engine.export_sim import export_docx, export_pdf
+from modules.scenario_sim.gen_engine.export_sim import export_docx
 from modules.scenario_sim.gen_engine.gen_parts.scenario import Scenario
 from modules.scenario_sim.gen_engine.gen_sim import generate
 from modules.scenario_sim.models import (
@@ -15,7 +15,7 @@ from modules.scenario_sim.models import (
     Scene,
     Simulation,
     SimulationInput,
-    SimulationInputObjective
+    SimulationInputObjective,
 )
 from modules.scenario_sim.models.simulation_model import PdfStatus, SimulationStatus
 from modules.scenario_sim.schemas.simulation_schemas import (
@@ -34,7 +34,7 @@ async def create_simulation_input_service(
     if not input_data.objectives or not (1 <= len(input_data.objectives) <= 3):
         raise HTTPException(
             status_code=400,
-            detail="Learning objectives must have between 1 and 3 items."
+            detail="Learning objectives must have between 1 and 3 items.",
         )
 
     db_input = SimulationInput(
@@ -46,15 +46,14 @@ async def create_simulation_input_service(
         student_ammount=input_data.student_ammount,
         actors_ammount=input_data.actors_ammount,
         uses_simulator=input_data.uses_simulator,
-        simulator_description=input_data.simulator_description
+        simulator_description=input_data.simulator_description,
     )
     db.add(db_input)
     db.flush()  # To get db_input.id
 
     for obj_desc in input_data.objectives:
         db_obj = SimulationInputObjective(
-            description=obj_desc,
-            simulation_input_id=db_input.id
+            description=obj_desc, simulation_input_id=db_input.id
         )
         db.add(db_obj)
 
@@ -82,7 +81,7 @@ async def create_simulation_input_service(
             input_data.student_ammount,
             input_data.actors_ammount,
             input_data.uses_simulator,
-            input_data.simulator_description
+            input_data.simulator_description,
         )
 
     db.refresh(db_input)
@@ -91,14 +90,14 @@ async def create_simulation_input_service(
 
 
 async def run_simulation_generation_task(
-    input_id: str, 
-    simulation_id: str, 
-    pitch: str, 
+    input_id: str,
+    simulation_id: str,
+    pitch: str,
     objectives: list[str] | list[SimulationInputObjective],
     student_ammount: int,
     actors_ammount: int,
     uses_simulator: bool,
-    simulator_description: str | None
+    simulator_description: str | None,
 ):
 
     if objectives and not isinstance(objectives[0], str):
@@ -112,7 +111,7 @@ async def run_simulation_generation_task(
         new_simulation = (
             db.query(Simulation).filter(Simulation.id == simulation_id).first()
         )
-        
+
         scenario_data = await generate(pitch)
 
         new_simulation.scene_organization = scenario_data.scene_organization
@@ -224,25 +223,30 @@ def get_simulations_by_input_id_service(db: Session, simulation_input_id: str):
 
 
 from typing import Optional
-from core.pagination import paginate_and_filter
 
+from core.pagination import paginate_and_filter
 from modules.scenario_sim.models import SimulationInput
 
-def get_all_simulation_ids_service(db: Session, page: int = 1, limit: int = 10, status: Optional[str] = None, learning_objectives: Optional[str] = None, pitch: Optional[str] = None):
+
+def get_all_simulation_ids_service(
+    db: Session,
+    page: int = 1,
+    limit: int = 10,
+    status: Optional[str] = None,
+    learning_objectives: Optional[str] = None,
+    pitch: Optional[str] = None,
+):
     """Retrieves simulations using pagination and filters."""
     query = db.query(Simulation)
-    
+
     if pitch:
-        query = query.join(SimulationInput).filter(SimulationInput.pitch.ilike(f"%{pitch}%"))
-        
+        query = query.join(SimulationInput).filter(
+            SimulationInput.pitch.ilike(f"%{pitch}%")
+        )
+
     filters = {"status": status, "learning_objectives": learning_objectives}
     return paginate_and_filter(
-        db=db,
-        model=Simulation,
-        page=page,
-        limit=limit,
-        filters=filters,
-        query=query
+        db=db, model=Simulation, page=page, limit=limit, filters=filters, query=query
     )
 
 
@@ -303,7 +307,7 @@ async def process_stale_queue(db: Session):
                 next_sim.simulation_input.student_ammount,
                 next_sim.simulation_input.actors_ammount,
                 next_sim.simulation_input.uses_simulator,
-                next_sim.simulation_input.simulator_description
+                next_sim.simulation_input.simulator_description,
             )
         )
         return next_sim.id
