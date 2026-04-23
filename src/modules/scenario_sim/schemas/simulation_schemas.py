@@ -1,19 +1,44 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from modules.scenario_sim.schemas.evaluation_schema import EvaluationResponse
 
 
 class SimulationInputCreate(BaseModel):
     pitch: str
+    local_aula: str
+    nome_cenario: str
+    cursos: str
+    componente_curricular: str
+    objectives: list[str]
+    student_ammount: int
+    actors_ammount: int
+    uses_simulator: bool
+    simulator_description: Optional[str] = None
 
 
 class SimulationInputRead(BaseModel):
     id: str
     pitch: str
+    local_aula: str
+    nome_cenario: str
+    cursos: str
+    componente_curricular: str
+    objectives: list[str]
+    student_ammount: int
+    actors_ammount: int
+    uses_simulator: bool
+    simulator_description: str | None
     created_at: datetime
     updated_at: datetime | None = None
+
+    @field_validator('objectives', mode='before')
+    @classmethod
+    def transform_objectives(cls, v):
+        if isinstance(v, list) and v and not isinstance(v[0], str):
+            return [obj.description for obj in v]
+        return v
 
     class Config:
         from_attributes: bool = True
@@ -54,6 +79,7 @@ class SceneRead(BaseModel):
 class SimulationFullRead(BaseModel):
     id: str
     simulation_input_id: str
+    simulation_input: Optional[SimulationInputRead] = None
     learning_objectives: str | None
     status: str
     pdf_status: str

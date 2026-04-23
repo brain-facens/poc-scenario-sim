@@ -2,7 +2,7 @@
 
 > [!CAUTION]
 > **LEITURA OBRIGATÓRIA ANTES DE CLONAR:**
-> Este repositório segue padrões rigorosos de **Gitflow**, **Conventional Commits** e **Versionamento Semântico**. Todo desenvolvedor deve ler o guia de [Padronização de Versões e Workflow](README.md) antes de iniciar qualquer contribuição. Não serão aceitos Pull Requests que não sigam estas diretrizes.
+> Este repositório segue padrões rigorosos de **Gitflow**, **Conventional Commits** e **Versionamento Semântico**. Todo desenvolvedor deve ler o guia de [Padronização de Versões e Workflow](RELEASES.md) antes de iniciar qualquer contribuição. Não serão aceitos Pull Requests que não sigam estas diretrizes.
 
 O **Brain Hub API** é um back-end robusto e modular construído em **FastAPI**, servindo como infraestrutura central para provas de conceito (PoCs) e sistemas focados em Inteligência Artificial, transcrição acelerada por GPU e pipelines orquestrados de Agentes LLM.
 
@@ -208,6 +208,16 @@ Para realizar uma migração limpa em ambiente de **DESENVOLVIMENTO**, siga este
    ```bash
    alembic upgrade head
    ```
+
+#### Alternativa Automática:
+
+com o Ambiente Python ativo e dependências instaladas, Rodar na root:
+
+```bash
+python scripts/db_reset.py
+```
+
+Script executa processo completo automaticamente
 
 > ⚠️ **Nota:** Este procedimento apaga todos os dados locais. Use apenas enquanto a estrutura do banco estiver mudando drasticamente dia após dia.
 

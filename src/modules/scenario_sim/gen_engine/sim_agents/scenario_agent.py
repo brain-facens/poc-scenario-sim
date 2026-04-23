@@ -1,6 +1,4 @@
-import os
-from agents import Agent, OpenAIChatCompletionsModel
-from openai import AsyncOpenAI
+from agents import Agent
 
 from modules.scenario_sim.gen_engine.gen_parts.scenario import Scenario
 from modules.scenario_sim.gen_engine.prompts.main_prompt import main_prompt
@@ -9,16 +7,6 @@ from modules.scenario_sim.gen_engine.sim_agents.participants_agent import (
     participants_agent,
 )
 from modules.scenario_sim.gen_engine.sim_agents.scene_agent import scene_agent
-
-MODEL = os.getenv("LOCAL_MODEL", "qwen3.5:9b")
-
-local_client: AsyncOpenAI = AsyncOpenAI(
-    base_url="http://localhost:11434/v1", api_key="sk_123"
-)
-
-model: OpenAIChatCompletionsModel = OpenAIChatCompletionsModel(
-    model=MODEL, openai_client=local_client
-)
 
 simulation_agent: Agent = Agent(
     name="Simulation Writer",
@@ -38,5 +26,4 @@ simulation_agent: Agent = Agent(
             tool_description="Writes scenes based on case and previously generated scenes",
         ),
     ],
-    model=model,
 )

@@ -10,6 +10,7 @@ class AtaStatus(enum.Enum):
     DOING = "doing"
     INTERRUPTED = "interrupted"
     STALE = "stale"
+    TRANSCRIBING = "transcribing"
 
 class TranscricaoModel(Base):
     __tablename__ = "transcricoes"
@@ -53,7 +54,7 @@ class AtaModel(Base):
     
     status = Column(Enum(AtaStatus), default=AtaStatus.DOING, nullable=False)
     file_path = Column(String(255), nullable=True)
-    error = Column(String, nullable=True)
+    error = Column(Text, nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
