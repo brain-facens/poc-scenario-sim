@@ -3,7 +3,7 @@ import traceback
 from datetime import datetime
 
 
-def log_exception(exception):
+def log_exception():
     # Create logs directory if it doesn't exist
     if not os.path.exists("logs"):
         os.makedirs("logs")

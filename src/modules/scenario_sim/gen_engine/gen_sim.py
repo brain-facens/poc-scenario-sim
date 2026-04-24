@@ -6,6 +6,7 @@ from agents.result import RunResult
 from dotenv import find_dotenv, load_dotenv
 from openai.types import Reasoning
 
+from modules.scenario_sim.gen_engine.export_sim import export_docx
 from modules.scenario_sim.gen_engine.gen_parts.scenario import Scenario
 from modules.scenario_sim.gen_engine.local_model import model
 from modules.scenario_sim.gen_engine.log_saver import log_exception
@@ -22,7 +23,7 @@ async def generate(usr_input: str) -> Scenario:
         try:
             result = await Runner.run(
                 starting_agent=simulation_agent,
-                input=usr_input,
+                input=f"raw_JSON_data:{usr_input}",
                 run_config=RunConfig(
                     model="gpt-5-nano",
                     model_settings=ModelSettings(
@@ -38,15 +39,13 @@ async def generate(usr_input: str) -> Scenario:
 
             result = await Runner.run(
                 starting_agent=simulation_agent,
-                input=usr_input,
+                input=f"raw_JSON_data:{usr_input}",
                 run_config=RunConfig(model=model),
             )
             return result.final_output_as(Scenario)
 
 
 if __name__ == "__main__":
-    from modules.scenario_sim.gen_engine.export_sim import export_pdf
-
     scenario: Scenario = asyncio.run(
         generate(
             "Escreva uma simulação onde um médico deve realizar um atendimento domiciliar para um idoso com medo de agulhas."
@@ -57,4 +56,4 @@ if __name__ == "__main__":
         with open("test.json", "w", encoding="utf-8") as file:
             _ = file.write(scenario.model_dump_json(indent=4))
 
-        asyncio.run(export_pdf(scenario))
+        asyncio.run(export_docx(scenario))
